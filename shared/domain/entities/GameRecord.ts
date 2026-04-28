@@ -1,11 +1,12 @@
 import type { GameResult } from '../value-objects/GameResult'
+import type { TerminationType } from '../value-objects/TerminationType'
 
 export interface GameRecord {
   gameId: string
   date: string
   color: 'white' | 'black'
   result: GameResult
-  termination: 'normal' | 'time' | 'resign' | 'abandoned'
+  termination: TerminationType
   openingName: string
   eco: string
   myElo: number
