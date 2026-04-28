@@ -28,7 +28,7 @@
 ## Phase 5 — Domain services
 - [x] Implement AnalyzeGames service
 - [x] Implement DetectMistakes service
-- [ ] Implement ScoreLeaks service
+- [x] Implement ScoreLeaks service
 - [ ] Implement BuildPuzzles service
 
 ## Phase 6 — Adapters
