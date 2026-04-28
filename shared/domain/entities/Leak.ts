@@ -1,5 +1,7 @@
+import type { LeakType } from '../value-objects/LeakType'
+
 export interface Leak {
-  type: 'time' | 'tactics' | 'opening' | 'structure' | 'endgame'
+  type: LeakType
   score: number
   title: string
   description: string
