@@ -11,7 +11,7 @@
 - [x] Define MistakeRecord
 - [x] Define Leak
 - [x] Define UserPuzzle
-- [ ] Define AnalysisRun
+- [x] Define AnalysisRun
 
 ## Phase 3 — Value objects
 - [ ] Define GameResult
