@@ -15,7 +15,7 @@
 
 ## Phase 3 — Value objects
 - [x] Define GameResult
-- [ ] Define LeakType
+- [x] Define LeakType
 - [ ] Define Phase
 - [ ] Define TerminationType
 
