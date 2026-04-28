@@ -21,7 +21,7 @@
 
 ## Phase 4 — Ports
 - [x] Define IPgnParserPort
-- [ ] Define IEnginePort
+- [x] Define IEnginePort
 - [ ] Define IPuzzleSourcePort
 - [ ] Define IAnalysisRepositoryPort
 
