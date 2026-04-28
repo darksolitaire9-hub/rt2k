@@ -16,6 +16,13 @@ export const MAX_LEAKS_REPORTED = 3
 export const MIN_PUZZLES = 3
 export const MAX_PUZZLES = 10
 
+// Phase boundaries (full move numbers, inclusive)
+export const OPENING_PHASE_UNTIL_MOVE = 10
+export const MIDDLEGAME_PHASE_UNTIL_MOVE = 30
+
+// Engine search depth for targeted evaluations
+export const ENGINE_SEARCH_DEPTH = 18
+
 // Relative weights used by ScoreLeaks service
 export const LEAK_WEIGHTS = {
   time: 1.0,
