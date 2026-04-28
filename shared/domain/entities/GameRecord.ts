@@ -1,8 +1,10 @@
+import type { GameResult } from '../value-objects/GameResult'
+
 export interface GameRecord {
   gameId: string
   date: string
   color: 'white' | 'black'
-  result: 'win' | 'loss' | 'draw'
+  result: GameResult
   termination: 'normal' | 'time' | 'resign' | 'abandoned'
   openingName: string
   eco: string

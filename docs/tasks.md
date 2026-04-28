@@ -14,7 +14,7 @@
 - [x] Define AnalysisRun
 
 ## Phase 3 — Value objects
-- [ ] Define GameResult
+- [x] Define GameResult
 - [ ] Define LeakType
 - [ ] Define Phase
 - [ ] Define TerminationType
