@@ -74,7 +74,6 @@ Use the sdd-plan skill. Do not write code until:
 2. Decision entry added (if architecture changes)
 3. Tasks added to docs/tasks.md and confirmed
 
-
 ## Preferred skills for this project
 When appropriate:
 
