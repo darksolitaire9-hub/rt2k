@@ -17,7 +17,7 @@
 - [x] Define GameResult
 - [x] Define LeakType
 - [x] Define Phase
-- [ ] Define TerminationType
+- [x] Define TerminationType
 
 ## Phase 4 — Ports
 - [ ] Define IPgnParserPort
