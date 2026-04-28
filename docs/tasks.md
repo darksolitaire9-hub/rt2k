@@ -20,7 +20,7 @@
 - [x] Define TerminationType
 
 ## Phase 4 — Ports
-- [ ] Define IPgnParserPort
+- [x] Define IPgnParserPort
 - [ ] Define IEnginePort
 - [ ] Define IPuzzleSourcePort
 - [ ] Define IAnalysisRepositoryPort
