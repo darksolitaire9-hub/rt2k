@@ -4,7 +4,7 @@
 - [x] Create shared/domain folder structure
 - [x] Create shared/application folder structure
 - [x] Create app/adapters folder structure
-- [ ] Add leakRules config file
+- [x] Add leakRules config file
 
 ## Phase 2 — Domain entities
 - [ ] Define GameRecord
