@@ -3,7 +3,7 @@
 ## Phase 1 — Foundation
 - [x] Create shared/domain folder structure
 - [x] Create shared/application folder structure
-- [ ] Create app/adapters folder structure
+- [x] Create app/adapters folder structure
 - [ ] Add leakRules config file
 
 ## Phase 2 — Domain entities
