@@ -20,7 +20,7 @@ Apply the database schema:
 ```sh
 # Run in Supabase SQL editor or via CLI
 supabase db push  # if using Supabase CLI
-# or paste supabase/schema.sql into the Supabase dashboard SQL editor
+# or paste docs/supabase-schema.sql into the Supabase dashboard SQL editor
 ```
 
 Start dev server:

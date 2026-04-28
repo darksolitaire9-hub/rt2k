@@ -26,12 +26,12 @@ The stage of the game where an issue occurred:
 - middlegame
 - endgame
 
-## Termination
+## TerminationType
 How a game ended:
-- time
-- mate
+- normal (checkmate or draw by agreement/repetition/etc.)
+- time (time forfeit)
 - resign
-- draw
+- abandoned
 - other
 
 ## LeakType

@@ -39,24 +39,24 @@ app/pages/
 app/components/
 app/composables/
 
-## Phase 1 — Foundation
+## Milestone 1 — Foundation
 - Create domain entities and value objects.
 - Create domain ports.
 - Create centralized leak rules config.
 - Establish docs and architectural vocabulary.
 
-## Phase 2 — PGN analysis
+## Milestone 2 — PGN analysis
 - Implement PGN parsing adapter with chess.js.
 - Build GameRecord and MistakeRecord generation.
 - Implement leak scoring.
 - Render a report page.
 
-## Phase 3 — Puzzle generation
+## Milestone 3 — Puzzle generation
 - Integrate Stockfish WASM via plugin and adapter.
 - Generate puzzles from MistakeRecords.
 - Build puzzle UI and validation flow.
 
-## Phase 4 — Persistence
+## Milestone 4 — Persistence
 - Add Supabase schema and repository adapter.
 - Save/load analyses and puzzles.
 - Build “My Analyses” page.
