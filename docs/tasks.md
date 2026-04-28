@@ -7,7 +7,7 @@
 - [x] Add leakRules config file
 
 ## Phase 2 — Domain entities
-- [ ] Define GameRecord
+- [x] Define GameRecord
 - [ ] Define MistakeRecord
 - [ ] Define Leak
 - [ ] Define UserPuzzle
