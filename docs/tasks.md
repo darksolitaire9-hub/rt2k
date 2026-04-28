@@ -8,7 +8,7 @@
 
 ## Phase 2 — Domain entities
 - [x] Define GameRecord
-- [ ] Define MistakeRecord
+- [x] Define MistakeRecord
 - [ ] Define Leak
 - [ ] Define UserPuzzle
 - [ ] Define AnalysisRun
