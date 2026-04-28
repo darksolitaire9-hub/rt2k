@@ -1,9 +1,10 @@
 import type { LeakType } from '../value-objects/LeakType'
+import type { Phase } from '../value-objects/Phase'
 
 export interface MistakeRecord {
   gameId: string
   moveNumber: number
-  phase: 'opening' | 'middlegame' | 'endgame'
+  phase: Phase
   leakType: LeakType
   fenBefore: string
   playedMove: string
