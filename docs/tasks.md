@@ -23,7 +23,7 @@
 - [x] Define IPgnParserPort
 - [x] Define IEnginePort
 - [x] Define IPuzzleSourcePort
-- [ ] Define IAnalysisRepositoryPort
+- [x] Define IAnalysisRepositoryPort
 
 ## Phase 5 — Domain services
 - [ ] Implement AnalyzeGames service
