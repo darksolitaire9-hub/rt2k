@@ -26,7 +26,7 @@
 - [x] Define IAnalysisRepositoryPort
 
 ## Phase 5 — Domain services
-- [ ] Implement AnalyzeGames service
+- [x] Implement AnalyzeGames service
 - [ ] Implement DetectMistakes service
 - [ ] Implement ScoreLeaks service
 - [ ] Implement BuildPuzzles service
