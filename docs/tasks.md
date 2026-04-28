@@ -16,7 +16,7 @@
 ## Phase 3 — Value objects
 - [x] Define GameResult
 - [x] Define LeakType
-- [ ] Define Phase
+- [x] Define Phase
 - [ ] Define TerminationType
 
 ## Phase 4 — Ports
