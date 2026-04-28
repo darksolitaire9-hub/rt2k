@@ -1,7 +1,7 @@
 # Tasks — v1
 
 ## Phase 1 — Foundation
-- [ ] Create shared/domain folder structure
+- [x] Create shared/domain folder structure
 - [ ] Create shared/application folder structure
 - [ ] Create app/adapters folder structure
 - [ ] Add leakRules config file
