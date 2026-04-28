@@ -11,6 +11,9 @@ import {
   MIN_PUZZLES,
   MAX_PUZZLES,
   LEAK_WEIGHTS,
+  OPENING_PHASE_UNTIL_MOVE,
+  MIDDLEGAME_PHASE_UNTIL_MOVE,
+  ENGINE_SEARCH_DEPTH,
 } from './leakRules'
 
 describe('leakRules', () => {
@@ -52,5 +55,15 @@ describe('leakRules', () => {
     expect(LEAK_WEIGHTS).toHaveProperty('opening')
     expect(LEAK_WEIGHTS).toHaveProperty('structure')
     expect(LEAK_WEIGHTS).toHaveProperty('endgame')
+  })
+
+  it('phase boundaries are positive and ordered opening < middlegame', () => {
+    expect(OPENING_PHASE_UNTIL_MOVE).toBeGreaterThan(0)
+    expect(MIDDLEGAME_PHASE_UNTIL_MOVE).toBeGreaterThan(OPENING_PHASE_UNTIL_MOVE)
+  })
+
+  it('engine search depth is a positive integer', () => {
+    expect(ENGINE_SEARCH_DEPTH).toBeGreaterThan(0)
+    expect(Number.isInteger(ENGINE_SEARCH_DEPTH)).toBe(true)
   })
 })

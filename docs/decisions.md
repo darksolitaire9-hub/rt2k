@@ -126,3 +126,44 @@ Each decision should be stable over time and explain the trade-offs.
 - All Claude sessions start in Plan Mode for new features.
 - Claude works one task per branch, mirroring the SDD task loop.
 - Claude never commits directly — developer reviews diff before every commit.
+
+---
+
+## D-008 — IPgnParserPort returns ParsedGame[] instead of GameRecord[]
+
+**Status:** Accepted
+
+**Reasoning:**
+- `DetectMistakes` needs move-level data (FEN, SAN, evals, clock) that `GameRecord` does not carry.
+- The PGN is parsed exactly once by chess.js; splitting the return into two calls or two ports would either parse twice or couple two adapters to shared state.
+- Functional programming principle "parse, don't validate": cross the external boundary once and surface the richest possible typed structure. Downstream services take what they need from that structure.
+- "Make illegal states unrepresentable": `detectMistakes(GameRecord[], engine)` is a type lie — `GameRecord` has no move data. `detectMistakes(ParsedGame[], engine)` is the honest contract.
+
+**What changed:**
+- New aggregate `ParsedGame { record: GameRecord, moves: ParsedMove[] }` in `shared/domain/entities/ParsedGame.ts`.
+- `IPgnParserPort.parse()` now returns `ParsedGame[]`.
+- `analyzeGames` service updated to return `ParsedGame[]`.
+
+**Implications:**
+- Adapters implementing `IPgnParserPort` must return both game metadata and move data in one call.
+- Services that only need game metadata extract `.record` from each `ParsedGame`.
+- `DetectMistakes` receives `ParsedGame[]` and uses `.moves` to detect eval-swing mistakes.
+
+---
+
+## D-009 — IEnginePort.evaluate() returns { score, bestMove } instead of number
+
+**Status:** Accepted
+
+**Reasoning:**
+- `MistakeRecord.bestMove` is a required non-nullable string. It must come from somewhere.
+- Stockfish computes both the eval score and the principal variation (best move) in a single search. Returning only the score and requiring a second call for the best move would double engine calls per position at no benefit.
+- Returning `{ score: number; bestMove: string }` is the honest contract: one call, one result, all data the domain needs.
+
+**What changed:**
+- `IEnginePort.evaluate()` now returns `Promise<{ score: number; bestMove: string }>`.
+- A named `EngineResult` type is exported alongside the port interface.
+
+**Implications:**
+- `DetectMistakes` calls `engine.evaluate(fenBefore, depth)` once per flagged position and reads `.bestMove` directly.
+- `StockfishWasmAdapter` must return both fields from its UCI response.

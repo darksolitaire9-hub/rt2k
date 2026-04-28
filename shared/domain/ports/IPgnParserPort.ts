@@ -1,5 +1,5 @@
-import type { GameRecord } from '../entities/GameRecord'
+import type { ParsedGame } from '../entities/ParsedGame'
 
 export interface IPgnParserPort {
-  parse(pgn: string, playerUsername: string): GameRecord[]
+  parse(pgn: string, playerUsername: string): ParsedGame[]
 }
