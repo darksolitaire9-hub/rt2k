@@ -22,7 +22,7 @@
 ## Phase 4 — Ports
 - [x] Define IPgnParserPort
 - [x] Define IEnginePort
-- [ ] Define IPuzzleSourcePort
+- [x] Define IPuzzleSourcePort
 - [ ] Define IAnalysisRepositoryPort
 
 ## Phase 5 — Domain services
