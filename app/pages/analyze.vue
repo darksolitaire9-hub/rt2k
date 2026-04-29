@@ -53,6 +53,7 @@ const {
           v-for="leak in leaks.slice(0, 3)"
           :key="leak.type"
           :leak="leak"
+          @train="navigateTo('/puzzles')"
         />
       </section>
 

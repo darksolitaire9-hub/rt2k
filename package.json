@@ -13,6 +13,7 @@
   "dependencies": {
     "@nuxt/ui": "^4.7.1",
     "chess.js": "^1.4.0",
+    "chessground": "^9.2.1",
     "nuxt": "^4.4.2"
   }
 }

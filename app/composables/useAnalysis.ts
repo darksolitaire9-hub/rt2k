@@ -5,7 +5,7 @@ import { LocalPuzzleSourceAdapter } from '../adapters/puzzles/LocalPuzzleSourceA
 import type { AnalysisResult } from '../../shared/application/use-cases/AnalyzePgnUseCase'
 
 export function useAnalysis() {
-  const result = ref<AnalysisResult | null>(null)
+  const result = useState<AnalysisResult | null>('rt2k-analysis', () => null)
   const loading = ref(false)
   const error = ref<string | null>(null)
 
