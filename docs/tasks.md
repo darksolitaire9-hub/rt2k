@@ -35,7 +35,7 @@
 - [x] Implement ChessJsPgnParserAdapter
 - [x] Implement StockfishWasmAdapter
 - [x] Implement SupabaseAnalysisRepositoryAdapter
-- [ ] Implement LocalPuzzleSourceAdapter
+- [x] Implement LocalPuzzleSourceAdapter
 
 ## Phase 7 — UI
 - [ ] Build analyze page
