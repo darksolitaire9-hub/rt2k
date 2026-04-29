@@ -32,7 +32,7 @@
 - [x] Implement BuildPuzzles service
 
 ## Phase 6 — Adapters
-- [ ] Implement ChessJsPgnParserAdapter
+- [x] Implement ChessJsPgnParserAdapter
 - [ ] Implement StockfishWasmAdapter
 - [ ] Implement SupabaseAnalysisRepositoryAdapter
 - [ ] Implement LocalPuzzleSourceAdapter
