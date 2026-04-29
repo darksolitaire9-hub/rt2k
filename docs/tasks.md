@@ -38,10 +38,10 @@
 - [x] Implement LocalPuzzleSourceAdapter
 
 ## Phase 7 — UI
-- [ ] Build analyze page
-- [ ] Build PGN upload component
-- [ ] Build analysis summary component
-- [ ] Build leak card component
+- [x] Build analyze page
+- [x] Build PGN upload component
+- [x] Build analysis summary component
+- [x] Build leak card component
 - [ ] Build puzzle board component
 - [ ] Build puzzle list component
 
