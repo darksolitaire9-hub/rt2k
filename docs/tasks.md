@@ -34,7 +34,7 @@
 ## Phase 6 — Adapters
 - [x] Implement ChessJsPgnParserAdapter
 - [x] Implement StockfishWasmAdapter
-- [ ] Implement SupabaseAnalysisRepositoryAdapter
+- [x] Implement SupabaseAnalysisRepositoryAdapter
 - [ ] Implement LocalPuzzleSourceAdapter
 
 ## Phase 7 — UI
