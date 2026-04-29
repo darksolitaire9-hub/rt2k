@@ -8,6 +8,9 @@ node_modules/
 .output/
 dist/
 
+# Stockfish WASM (large binary — copy from node_modules/stockfish/bin/ to public/stockfish/)
+public/stockfish/
+
 # Env
 .env
 .env.*

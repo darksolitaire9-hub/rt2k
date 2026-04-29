@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -14,6 +16,7 @@
     "@nuxt/ui": "^4.7.1",
     "chess.js": "^1.4.0",
     "chessground": "^9.2.1",
-    "nuxt": "^4.4.2"
+    "nuxt": "^4.4.2",
+    "stockfish": "^18.0.7"
   }
 }
