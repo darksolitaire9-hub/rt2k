@@ -42,8 +42,8 @@
 - [x] Build PGN upload component
 - [x] Build analysis summary component
 - [x] Build leak card component
-- [ ] Build puzzle board component
-- [ ] Build puzzle list component
+- [x] Build puzzle board component
+- [x] Build puzzle list component
 
 ## Phase 8 — Persistence
 - [ ] Apply Supabase schema
