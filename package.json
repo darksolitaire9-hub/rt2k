@@ -11,6 +11,8 @@
     "vitest": "^2.0.0"
   },
   "dependencies": {
-    "chess.js": "^1.4.0"
+    "@nuxt/ui": "^4.7.1",
+    "chess.js": "^1.4.0",
+    "nuxt": "^4.4.2"
   }
 }
