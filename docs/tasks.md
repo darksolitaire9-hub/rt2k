@@ -29,7 +29,7 @@
 - [x] Implement AnalyzeGames service
 - [x] Implement DetectMistakes service
 - [x] Implement ScoreLeaks service
-- [ ] Implement BuildPuzzles service
+- [x] Implement BuildPuzzles service
 
 ## Phase 6 — Adapters
 - [ ] Implement ChessJsPgnParserAdapter
