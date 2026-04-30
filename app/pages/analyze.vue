@@ -1,28 +1,47 @@
 <script setup lang="ts">
 const {
-  loading,
-  error,
-  hasResult,
-  totalGames,
-  wins,
-  losses,
-  draws,
-  timeLosses,
-  winRate,
-  ratingRange,
-  openingStats,
-  leaks,
-  isPartial,
-  analyze,
+loading,
+progress,
+error,
+hasResult,
+totalGames,
+wins,
+losses,
+draws,
+timeLosses,
+winRate,
+ratingRange,
+openingStats,
+leaks,
+isPartial,
+analyze,
 } = useAnalysis()
+
+const progressMessage = computed(() => {
+if (!loading.value) return ''
+const { stage, current, total } = progress.value
+if (stage === 'parsing') return 'Parsing PGN...'
+if (stage === 'detecting') return 'Detecting patterns...'
+if (stage === 'evaluating') {
+  return `Checking mistakes... (${current}/${total})`
+}
+return 'Starting analysis...'
+})
 
 const openingOpen = ref(false)
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto px-4 py-8 space-y-6">
-    <PgnUploadCard v-if="!hasResult" :loading="loading" @analyze="analyze" />
+<div class="max-w-2xl mx-auto px-4 py-8 space-y-6">
+  <div v-if="loading && !hasResult" class="flex flex-col items-center justify-center py-12 space-y-4">
+    <UIcon name="i-heroicons-arrow-path" class="size-8 animate-spin text-primary" />
+    <div class="text-center">
+      <p class="font-medium">{{ progressMessage }}</p>
+      <p class="text-sm text-muted">This may take a minute for large files.</p>
+    </div>
+  </div>
 
+  <PgnUploadCard v-if="!hasResult && !loading" :loading="loading" @analyze="analyze" />
     <UAlert
       v-if="error"
       color="error"

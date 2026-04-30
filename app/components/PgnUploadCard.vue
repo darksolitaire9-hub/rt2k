@@ -1,11 +1,17 @@
 <script setup lang="ts">
 defineProps<{ loading: boolean }>()
 
-const emit = defineEmits<{ analyze: [pgn: string, username: string] }>()
+const emit = defineEmits<{ analyze: [pgn: string, username: string, days: number] }>()
 
 const fileName = ref('')
 const pgn = ref('')
 const playerUsername = ref('')
+const selectedRange = ref(90)
+const ranges = [
+  { label: '90 days', value: 90 },
+  { label: '180 days', value: 180 },
+  { label: 'All time', value: 9999 }
+]
 const fileError = ref('')
 const isDragging = ref(false)
 const readProgress = ref(0)
@@ -65,7 +71,7 @@ function onDrop(event: DragEvent) {
 
 function submit() {
   if (pgn.value && playerUsername.value.trim()) {
-    emit('analyze', pgn.value, playerUsername.value.trim())
+    emit('analyze', pgn.value, playerUsername.value.trim(), selectedRange.value)
   }
 }
 </script>
@@ -145,10 +151,28 @@ function submit() {
             @keyup.enter="submit"
           />
 
+          <div class="flex flex-col gap-2">
+            <p class="text-xs font-medium text-muted px-1">Analysis Window</p>
+            <div class="flex gap-2">
+              <UButton
+                v-for="r in ranges"
+                :key="r.value"
+                :variant="selectedRange === r.value ? 'solid' : 'ghost'"
+                color="neutral"
+                size="xs"
+                class="flex-1 justify-center cursor-pointer"
+                @click="selectedRange = r.value"
+              >
+                {{ r.label }}
+              </UButton>
+            </div>
+          </div>
+
           <UButton
             v-if="playerUsername.trim()"
             block
             size="lg"
+            class="cursor-pointer"
             :loading="loading"
             :disabled="!pgn"
             @click="submit"

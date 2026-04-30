@@ -6,6 +6,7 @@ import type { AnalysisResult } from '../../shared/application/use-cases/AnalyzeP
 export function useAnalysis() {
   const result = useState<AnalysisResult | null>('rt2k-analysis', () => null)
   const loading = ref(false)
+  const progress = ref({ stage: '', current: 0, total: 0 })
   const error = ref<string | null>(null)
 
   const parser = new ChessJsPgnParserAdapter()
@@ -52,13 +53,16 @@ export function useAnalysis() {
     error.value = null
   }
 
-  async function analyze(pgn: string, playerUsername: string) {
+  async function analyze(pgn: string, playerUsername: string, days: number = 90) {
     loading.value = true
     error.value = null
     result.value = null
+    progress.value = { stage: 'starting', current: 0, total: 0 }
     try {
       const engine = createStockfishAdapter('/stockfish/stockfish.js')
-      result.value = await analyzePgn(pgn, playerUsername, parser, engine)
+      result.value = await analyzePgn(pgn, playerUsername, parser, engine, days, (p) => {
+        progress.value = p
+      })
     }
     catch (e) {
       error.value = e instanceof Error ? e.message : 'Analysis failed. Check that your PGN is valid.'
@@ -68,5 +72,5 @@ export function useAnalysis() {
     }
   }
 
-  return { loading, error, hasResult, totalGames, wins, losses, draws, timeLosses, winRate, ratingRange, openingStats, leaks, puzzles, isPartial, analyze }
+  return { loading, progress, error, hasResult, totalGames, wins, losses, draws, timeLosses, winRate, ratingRange, openingStats, leaks, puzzles, isPartial, analyze }
 }

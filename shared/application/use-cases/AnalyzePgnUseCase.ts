@@ -21,33 +21,69 @@ export interface AnalysisResult {
   trendReport: TrendReport
 }
 
+export type ProgressCallback = (data: { stage: 'parsing' | 'detecting' | 'evaluating'; current: number; total: number }) => void
+
 export async function analyzePgn(
   pgn: string,
   playerUsername: string,
   parser: IPgnParserPort,
   engine: IEnginePort,
+  days: number = 90,
+  onProgress?: ProgressCallback
 ): Promise<AnalysisResult> {
+  onProgress?.({ stage: 'parsing', current: 0, total: 1 })
   const parsedGames = analyzeGames(parser, pgn, playerUsername)
 
-  // Take the MOST RECENT games (usually at the end of the PGN)
-  const isCapped = parsedGames.length > MAX_GAMES_PER_ANALYSIS_RUN
+  // 1. Filter by Date (User selected days) or fallback
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - days)
+  
+  const recentGames = parsedGames.filter(g => {
+    const dateStr = g.record.date.replace(/\./g, '-') // YYYY.MM.DD -> YYYY-MM-DD
+    const gameDate = new Date(dateStr)
+    return !isNaN(gameDate.getTime()) && gameDate >= cutoff
+  })
+
+  // Use recentGames if we have enough, otherwise fallback to last N games
+  const pool = recentGames.length >= 20 ? recentGames : parsedGames
+  const isCapped = pool.length > MAX_GAMES_PER_ANALYSIS_RUN
   const capped = isCapped 
-    ? parsedGames.slice(-MAX_GAMES_PER_ANALYSIS_RUN) 
-    : parsedGames
+    ? pool.slice(-MAX_GAMES_PER_ANALYSIS_RUN) 
+    : pool
 
   const games = capped.map(g => g.record)
-  
-  // isPartial is true if we capped the games OR if we have significant missing data
   const isPartial = isCapped || games.some(g => g.clockPerMove.every(c => c === null))
 
+  onProgress?.({ stage: 'detecting', current: 0, total: 1 })
   const trendReport = computeTrend(games)
   const candidates = detectMistakes(capped)
 
+  // 2. Parallel Evaluation with Concurrency Limit
   const confirmed: MistakeRecord[] = []
-  for (const candidate of candidates) {
-    const { score, bestMove } = await engine.evaluate(candidate.fen, ENGINE_SEARCH_DEPTH)
-    confirmed.push({ ...candidate, engineEval: score, bestMove })
+  const totalCandidates = candidates.length
+  const CONCURRENCY = 3
+  
+  for (let i = 0; i < candidates.length; i += CONCURRENCY) {
+    const chunk = candidates.slice(i, i + CONCURRENCY)
+    onProgress?.({ stage: 'evaluating', current: i, total: totalCandidates })
+    
+    const results = await Promise.all(chunk.map(async (candidate) => {
+      try {
+        const { score, bestMove } = await engine.evaluate(candidate.fen, ENGINE_SEARCH_DEPTH)
+        console.log(`[Trace] Eval ${candidate.gameId} m${candidate.moveNumber}: score=${score}, best=${bestMove}, type=${candidate.leakType}`)
+        return { ...candidate, engineEval: score, bestMove }
+      } catch (e) {
+        console.error(`[Trace] Engine failed for ${candidate.gameId} m${candidate.moveNumber}:`, e)
+        return null
+      }
+    }))
+
+    for (const r of results) {
+      if (r) confirmed.push(r)
+    }
   }
+
+  onProgress?.({ stage: 'evaluating', current: totalCandidates, total: totalCandidates })
 
   const leaks = scoreLeaks(confirmed, trendReport)
   const puzzles = buildPuzzles(confirmed)
