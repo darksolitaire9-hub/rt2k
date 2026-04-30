@@ -6,6 +6,7 @@ const props = defineProps<{
     title: string
     description: string
     evidenceGameIds: string[]
+    evidence: string[]
   }
 }>()
 
@@ -22,11 +23,6 @@ const severityLabel = computed(() => {
   if (props.leak.score <= 70) return 'Moderate leak'
   return 'Major leak'
 })
-
-const evidenceLine = computed(() => {
-  const n = props.leak.evidenceGameIds.length
-  return `Found in ${n} game${n === 1 ? '' : 's'}`
-})
 </script>
 
 <template>
@@ -37,17 +33,22 @@ const evidenceLine = computed(() => {
         <div class="flex items-center gap-1.5 shrink-0">
           <span class="text-xs text-muted">{{ severityLabel }}</span>
           <UBadge :color="severityColor" variant="soft">
-            {{ leak.score }}/100
+            {{ Math.round(leak.score) }}/100
           </UBadge>
         </div>
       </div>
     </template>
 
-    <div class="space-y-3">
-      <p class="text-sm text-muted">{{ leak.description }}</p>
-      <ul class="text-xs text-muted list-disc list-inside space-y-0.5">
-        <li>{{ evidenceLine }}</li>
+    <div class="space-y-4">
+      <p class="text-sm text-muted leading-relaxed">{{ leak.description }}</p>
+
+      <ul v-if="leak.evidence.length" class="space-y-1">
+        <li v-for="bullet in leak.evidence" :key="bullet" class="text-xs text-muted flex items-start gap-2">
+          <UIcon name="i-heroicons-check-circle" class="size-3.5 mt-0.5 text-success/70" />
+          {{ bullet }}
+        </li>
       </ul>
+
       <UButton variant="outline" size="sm" block @click="$emit('train', leak.type)">
         Train this
       </UButton>

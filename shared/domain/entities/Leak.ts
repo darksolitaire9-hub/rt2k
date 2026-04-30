@@ -6,4 +6,5 @@ export interface Leak {
   title: string
   description: string
   evidenceGameIds: string[]
+  evidence: string[]
 }

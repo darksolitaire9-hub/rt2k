@@ -4,6 +4,8 @@ export interface UserPuzzle {
   id: string
   sourceGameId: string
   sourceMoveNumber: number
+  sourceOpponent: string
+  sourceDate: string
   fen: string
   solution: string
   clockAtMoment: number | null

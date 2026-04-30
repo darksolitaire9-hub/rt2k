@@ -48,6 +48,8 @@ export function detectMistakes(games: ParsedGame[]): MistakeRecord[] {
           heuristicReason: 'clock_heuristic',
           engineEval: null,
           bestMove: null,
+          sourceOpponent: record.oppName,
+          sourceDate: record.date,
         })
       }
     }
@@ -66,6 +68,8 @@ export function detectMistakes(games: ParsedGame[]): MistakeRecord[] {
           heuristicReason: 'pre_flag_position',
           engineEval: null,
           bestMove: null,
+          sourceOpponent: record.oppName,
+          sourceDate: record.date,
         })
       }
     }
@@ -85,6 +89,8 @@ export function detectMistakes(games: ParsedGame[]): MistakeRecord[] {
           heuristicReason: 'material_swing',
           engineEval: null,
           bestMove: null,
+          sourceOpponent: record.oppName,
+          sourceDate: record.date,
         })
         i++ // skip adjacent to avoid overlapping swings on the same exchange
       }
@@ -107,6 +113,8 @@ export function detectMistakes(games: ParsedGame[]): MistakeRecord[] {
         heuristicReason: 'early_resignation',
         engineEval: null,
         bestMove: null,
+        sourceOpponent: record.oppName,
+        sourceDate: record.date,
       })
     }
 

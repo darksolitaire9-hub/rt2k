@@ -4,6 +4,8 @@ defineProps<{
     id: string
     sourceGameId: string
     sourceMoveNumber: number
+    sourceOpponent: string
+    sourceDate: string
     fen: string
     solution: string
     clockAtMoment: number | null
@@ -27,9 +29,12 @@ const LEAK_LABELS: Record<string, string> = {
     <div class="flex items-center justify-between gap-3">
       <div class="min-w-0 space-y-1">
         <p class="text-sm font-medium truncate">
-          From your game · move {{ puzzle.sourceMoveNumber }}
+          vs {{ puzzle.sourceOpponent }} · {{ puzzle.sourceDate }}
         </p>
-        <div class="flex flex-wrap gap-1">
+        <p class="text-xs text-muted">
+          Move {{ puzzle.sourceMoveNumber }}
+        </p>
+        <div class="flex flex-wrap gap-1 mt-1">
           <UBadge color="neutral" variant="soft" size="sm">
             {{ LEAK_LABELS[puzzle.leakType] ?? puzzle.leakType }}
           </UBadge>

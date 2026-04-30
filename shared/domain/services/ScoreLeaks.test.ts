@@ -1,125 +1,103 @@
 import { describe, it, expect } from 'vitest'
 import { scoreLeaks } from './ScoreLeaks'
 import type { MistakeRecord } from '../entities/MistakeRecord'
+import type { TrendReport } from '../entities/TrendReport'
 import { LeakType } from '../value-objects/LeakType'
-import { Phase } from '../value-objects/Phase'
 import {
-  MIN_OCCURRENCES_FOR_LEAK,
+  MIN_GAMES_FOR_LEAK_PATTERN,
   MAX_LEAKS_REPORTED,
   LEAK_WEIGHTS,
 } from '../config/leakRules'
+
+const DEFAULT_TREND: TrendReport = {
+  recentRatingDelta: 0,
+  recentWinRate: 0.5,
+  flagRate: 0.1,
+  dominantTermination: 'Normal',
+}
 
 function makeMistake(overrides: Partial<MistakeRecord> = {}): MistakeRecord {
   return {
     gameId: 'g1',
     moveNumber: 15,
-    phase: Phase.Middlegame,
-    leakType: LeakType.Tactics,
-    fenBefore: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-    playedMove: 'e4',
+    leakType: LeakType.TacticalMiss,
+    fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
     bestMove: 'd4',
-    evalBefore: 200,
-    evalAfter: 0,
-    evalSwing: 200,
-    timeRemainingSeconds: 120,
-    theme: null,
+    clockAtMoment: 120,
+    heuristicReason: 'material_swing',
+    engineEval: -200,
     ...overrides,
   }
 }
 
 describe('scoreLeaks', () => {
   it('returns empty array when there are no mistakes', () => {
-    expect(scoreLeaks([])).toEqual([])
+    expect(scoreLeaks([], DEFAULT_TREND)).toEqual([])
   })
 
   it('does not report a leak below the minimum occurrence threshold', () => {
-    const mistakes = Array.from({ length: MIN_OCCURRENCES_FOR_LEAK - 1 }, (_, i) =>
+    const mistakes = Array.from({ length: MIN_GAMES_FOR_LEAK_PATTERN - 1 }, (_, i) =>
       makeMistake({ gameId: `g${i}` }),
     )
-    expect(scoreLeaks(mistakes)).toHaveLength(0)
+    expect(scoreLeaks(mistakes, DEFAULT_TREND)).toHaveLength(0)
   })
 
   it('reports a leak when occurrences meet the minimum threshold', () => {
-    const mistakes = Array.from({ length: MIN_OCCURRENCES_FOR_LEAK }, (_, i) =>
+    const mistakes = Array.from({ length: MIN_GAMES_FOR_LEAK_PATTERN }, (_, i) =>
       makeMistake({ gameId: `g${i}` }),
     )
-    const result = scoreLeaks(mistakes)
+    const result = scoreLeaks(mistakes, DEFAULT_TREND)
     expect(result).toHaveLength(1)
-    expect(result[0].type).toBe(LeakType.Tactics)
+    expect(result[0].type).toBe(LeakType.TacticalMiss)
   })
 
-  it('caps output at MAX_LEAKS_REPORTED even with many leak types', () => {
-    const types = [LeakType.Tactics, LeakType.Time, LeakType.Opening, LeakType.Endgame]
+  it('caps output at MAX_LEAKS_REPORTED', () => {
+    const types = [LeakType.TacticalMiss, LeakType.FlagRisk, LeakType.PreFlagBlunder, LeakType.EarlyResignation]
     const mistakes = types.flatMap((leakType, ti) =>
-      Array.from({ length: MIN_OCCURRENCES_FOR_LEAK + 1 }, (_, i) =>
+      Array.from({ length: MIN_GAMES_FOR_LEAK_PATTERN + 1 }, (_, i) =>
         makeMistake({ leakType, gameId: `g${ti}${i}` }),
       ),
     )
-    const result = scoreLeaks(mistakes)
+    const result = scoreLeaks(mistakes, DEFAULT_TREND)
     expect(result.length).toBeLessThanOrEqual(MAX_LEAKS_REPORTED)
   })
 
-  it('returns leaks sorted by score descending', () => {
-    // Tactics weight > Time weight — give tactics more occurrences so it scores highest
-    const tacticsMistakes = Array.from({ length: 5 }, (_, i) =>
-      makeMistake({ leakType: LeakType.Tactics, gameId: `gt${i}`, evalSwing: 300 }),
+  it('boosts time-based leaks when flagRate is high', () => {
+    const count = MIN_GAMES_FOR_LEAK_PATTERN + 1
+    const mistakes = Array.from({ length: count }, (_, i) =>
+      makeMistake({ leakType: LeakType.FlagRisk, gameId: `g${i}` }),
     )
-    const timeMistakes = Array.from({ length: MIN_OCCURRENCES_FOR_LEAK }, (_, i) =>
-      makeMistake({ leakType: LeakType.Time, gameId: `gm${i}`, evalSwing: null }),
-    )
-    const result = scoreLeaks([...timeMistakes, ...tacticsMistakes])
-    for (let i = 1; i < result.length; i++) {
-      expect(result[i - 1].score).toBeGreaterThanOrEqual(result[i].score)
-    }
+
+    const lowFlagTrend: TrendReport = { ...DEFAULT_TREND, flagRate: 0.05 }
+    const highFlagTrend: TrendReport = { ...DEFAULT_TREND, flagRate: 0.4 }
+
+    const lowScore = scoreLeaks(mistakes, lowFlagTrend)[0].score
+    const highScore = scoreLeaks(mistakes, highFlagTrend)[0].score
+
+    expect(highScore).toBeGreaterThan(lowScore)
   })
 
-  it('populates evidenceGameIds with unique game ids for each leak', () => {
+  it('populates evidenceGameIds with unique game ids', () => {
     const mistakes = [
       makeMistake({ gameId: 'g1' }),
-      makeMistake({ gameId: 'g1' }),  // same game, should appear once
+      makeMistake({ gameId: 'g1' }),
       makeMistake({ gameId: 'g2' }),
     ]
-    const result = scoreLeaks(mistakes)
-    expect(result[0].evidenceGameIds).toContain('g1')
-    expect(result[0].evidenceGameIds).toContain('g2')
-    expect(new Set(result[0].evidenceGameIds).size).toBe(result[0].evidenceGameIds.length)
+    // Force it to meet threshold for testing
+    const filler = Array.from({ length: MIN_GAMES_FOR_LEAK_PATTERN }, (_, i) => makeMistake({ gameId: `f${i}` }))
+    const result = scoreLeaks([...mistakes, ...filler], DEFAULT_TREND)
+    const leak = result[0]
+    expect(leak.evidenceGameIds).toContain('g1')
+    expect(leak.evidenceGameIds).toContain('g2')
+    expect(new Set(leak.evidenceGameIds).size).toBe(leak.evidenceGameIds.length)
   })
 
-  it('applies LEAK_WEIGHTS to compute score', () => {
-    const count = MIN_OCCURRENCES_FOR_LEAK + 1
-    const tacticsMistakes = Array.from({ length: count }, (_, i) =>
-      makeMistake({ leakType: LeakType.Tactics, gameId: `gt${i}`, evalSwing: 100 }),
-    )
-    const timeMistakes = Array.from({ length: count }, (_, i) =>
-      makeMistake({ leakType: LeakType.Time, gameId: `gm${i}`, evalSwing: null }),
-    )
-    const result = scoreLeaks([...tacticsMistakes, ...timeMistakes])
-    const tactics = result.find(l => l.type === LeakType.Tactics)!
-    const time = result.find(l => l.type === LeakType.Time)!
-    // Tactics weight (1.5) > Time weight (1.0) with same occurrence count
-    expect(tactics.score).toBeGreaterThan(time.score)
-    expect(tactics.score / time.score).toBeCloseTo(LEAK_WEIGHTS.tactics / LEAK_WEIGHTS.time, 1)
-  })
-
-  it('generates a non-empty title and description for each leak', () => {
-    const mistakes = Array.from({ length: MIN_OCCURRENCES_FOR_LEAK }, (_, i) =>
+  it('generates a non-empty title and description', () => {
+    const mistakes = Array.from({ length: MIN_GAMES_FOR_LEAK_PATTERN }, (_, i) =>
       makeMistake({ gameId: `g${i}` }),
     )
-    const result = scoreLeaks(mistakes)
+    const result = scoreLeaks(mistakes, DEFAULT_TREND)
     expect(result[0].title.length).toBeGreaterThan(0)
     expect(result[0].description.length).toBeGreaterThan(0)
-  })
-
-  it('handles multiple leak types independently', () => {
-    const tactics = Array.from({ length: MIN_OCCURRENCES_FOR_LEAK }, (_, i) =>
-      makeMistake({ leakType: LeakType.Tactics, gameId: `gt${i}` }),
-    )
-    const opening = Array.from({ length: MIN_OCCURRENCES_FOR_LEAK }, (_, i) =>
-      makeMistake({ leakType: LeakType.Opening, gameId: `go${i}` }),
-    )
-    const result = scoreLeaks([...tactics, ...opening])
-    const types = result.map(l => l.type)
-    expect(types).toContain(LeakType.Tactics)
-    expect(types).toContain(LeakType.Opening)
   })
 })

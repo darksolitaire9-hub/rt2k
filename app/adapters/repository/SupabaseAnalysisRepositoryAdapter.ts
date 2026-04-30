@@ -21,6 +21,7 @@ function toRunRow(run: AnalysisRun, userId: string | null): Record<string, unkno
     created_at: run.createdAt,
     user_id: userId,
     is_partial: run.isPartial,
+    trend_report: run.trendReport,
   }
 }
 
@@ -31,7 +32,7 @@ function fromRunRow(row: Record<string, unknown>): AnalysisRun {
     gamesCount: row['games_count'] as number,
     createdAt: row['created_at'] as string,
     isPartial: (row['is_partial'] as boolean) ?? false,
-    trendReport: null,
+    trendReport: (row['trend_report'] as AnalysisRun['trendReport']) ?? null,
   }
 }
 

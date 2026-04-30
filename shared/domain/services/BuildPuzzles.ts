@@ -7,6 +7,8 @@ function toUserPuzzle(m: MistakeRecord): UserPuzzle {
     id: `${m.gameId}-${m.moveNumber}`,
     sourceGameId: m.gameId,
     sourceMoveNumber: m.moveNumber,
+    sourceOpponent: m.sourceOpponent,
+    sourceDate: m.sourceDate,
     fen: m.fen,
     solution: m.bestMove!,
     clockAtMoment: m.clockAtMoment,

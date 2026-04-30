@@ -9,4 +9,6 @@ export interface MistakeRecord {
   heuristicReason: string
   engineEval: number | null
   bestMove: string | null
+  sourceOpponent: string
+  sourceDate: string
 }

@@ -107,6 +107,7 @@ export class ChessJsPgnParserAdapter implements IPgnParserPort {
     const record: GameRecord = {
       gameId,
       date: h['Date'] ?? '',
+      oppName: color === 'white' ? black : white,
       color,
       result,
       termination,

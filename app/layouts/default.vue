@@ -1,15 +1,30 @@
 <script setup lang="ts">
 const { progress, isLoading } = useLoadingIndicator()
+const route = useRoute()
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col">
-    <header class="border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10 bg-white dark:bg-gray-950">
+  <div class="min-h-screen flex flex-col bg-background">
+    <header class="border-b border-default sticky top-0 z-10 bg-background/80 backdrop-blur-md">
       <div class="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
         <NuxtLink to="/analyze" class="font-bold text-lg tracking-tight">rt2k</NuxtLink>
         <nav class="flex items-center gap-1">
-          <UButton variant="ghost" size="sm" to="/analyze">Analyse</UButton>
-          <UButton variant="ghost" size="sm" to="/puzzles">Puzzles</UButton>
+          <UButton
+            variant="ghost"
+            size="sm"
+            to="/analyze"
+            :color="route.path === '/analyze' ? 'primary' : 'neutral'"
+          >
+            Analyse
+          </UButton>
+          <UButton
+            variant="ghost"
+            size="sm"
+            to="/puzzles"
+            :color="route.path.startsWith('/puzzles') ? 'primary' : 'neutral'"
+          >
+            Puzzles
+          </UButton>
         </nav>
       </div>
       <UProgress

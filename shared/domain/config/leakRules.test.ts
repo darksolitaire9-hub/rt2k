@@ -1,14 +1,15 @@
 import { describe, it, expect } from 'vitest'
 import {
   BLUNDER_THRESHOLD_CP,
-  MISTAKE_THRESHOLD_CP,
-  INACCURACY_THRESHOLD_CP,
-  TIME_LOSS_THRESHOLD_SECONDS,
-  LOW_TIME_THRESHOLD_SECONDS,
-  MIN_OCCURRENCES_FOR_LEAK,
-  MIN_GAMES_FOR_ANALYSIS,
+  MIN_CLOCK_FLAG_THRESHOLD_SECONDS,
+  PRE_FLAG_LOOKBACK_MOVES,
+  MATERIAL_SWING_PAWN_UNITS,
+  EARLY_RESIGNATION_MAX_MOVES,
+  MAX_CANDIDATES_PER_GAME,
+  MAX_GAMES_PER_ANALYSIS_RUN,
+  MIN_GAMES_FOR_LEAK_PATTERN,
+  TREND_WINDOW_GAMES,
   MAX_LEAKS_REPORTED,
-  MIN_PUZZLES,
   MAX_PUZZLES,
   LEAK_WEIGHTS,
   OPENING_PHASE_UNTIL_MOVE,
@@ -17,26 +18,23 @@ import {
 } from './leakRules'
 
 describe('leakRules', () => {
-  it('eval thresholds are positive and ordered inaccuracy < mistake < blunder', () => {
-    expect(INACCURACY_THRESHOLD_CP).toBeGreaterThan(0)
-    expect(MISTAKE_THRESHOLD_CP).toBeGreaterThan(INACCURACY_THRESHOLD_CP)
-    expect(BLUNDER_THRESHOLD_CP).toBeGreaterThan(MISTAKE_THRESHOLD_CP)
+  it('thresholds are positive', () => {
+    expect(BLUNDER_THRESHOLD_CP).toBeGreaterThan(0)
+    expect(MIN_CLOCK_FLAG_THRESHOLD_SECONDS).toBeGreaterThan(0)
+    expect(PRE_FLAG_LOOKBACK_MOVES).toBeGreaterThan(0)
+    expect(MATERIAL_SWING_PAWN_UNITS).toBeGreaterThan(0)
+    expect(EARLY_RESIGNATION_MAX_MOVES).toBeGreaterThan(0)
   })
 
-  it('time thresholds are positive and ordered low < loss', () => {
-    expect(LOW_TIME_THRESHOLD_SECONDS).toBeGreaterThan(0)
-    expect(TIME_LOSS_THRESHOLD_SECONDS).toBeGreaterThan(LOW_TIME_THRESHOLD_SECONDS)
+  it('limits are at least 1', () => {
+    expect(MAX_CANDIDATES_PER_GAME).toBeGreaterThanOrEqual(1)
+    expect(MAX_GAMES_PER_ANALYSIS_RUN).toBeGreaterThanOrEqual(1)
+    expect(MIN_GAMES_FOR_LEAK_PATTERN).toBeGreaterThanOrEqual(1)
+    expect(TREND_WINDOW_GAMES).toBeGreaterThanOrEqual(1)
   })
 
-  it('occurrence and game minimums are at least 1', () => {
-    expect(MIN_OCCURRENCES_FOR_LEAK).toBeGreaterThanOrEqual(1)
-    expect(MIN_GAMES_FOR_ANALYSIS).toBeGreaterThanOrEqual(1)
-  })
-
-  it('puzzle count range is valid and matches requirements (3–10)', () => {
-    expect(MIN_PUZZLES).toBe(3)
+  it('puzzle count limit is valid', () => {
     expect(MAX_PUZZLES).toBe(10)
-    expect(MAX_PUZZLES).toBeGreaterThan(MIN_PUZZLES)
   })
 
   it('max leaks reported matches requirements (up to 3)', () => {
@@ -49,12 +47,11 @@ describe('leakRules', () => {
     }
   })
 
-  it('leak weights cover all five leak types', () => {
-    expect(LEAK_WEIGHTS).toHaveProperty('time')
-    expect(LEAK_WEIGHTS).toHaveProperty('tactics')
-    expect(LEAK_WEIGHTS).toHaveProperty('opening')
-    expect(LEAK_WEIGHTS).toHaveProperty('structure')
-    expect(LEAK_WEIGHTS).toHaveProperty('endgame')
+  it('leak weights cover all current leak types', () => {
+    expect(LEAK_WEIGHTS).toHaveProperty('FLAG_RISK')
+    expect(LEAK_WEIGHTS).toHaveProperty('PRE_FLAG_BLUNDER')
+    expect(LEAK_WEIGHTS).toHaveProperty('TACTICAL_MISS')
+    expect(LEAK_WEIGHTS).toHaveProperty('EARLY_RESIGNATION')
   })
 
   it('phase boundaries are positive and ordered opening < middlegame', () => {

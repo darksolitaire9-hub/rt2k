@@ -4,6 +4,7 @@ import type { TerminationType } from '../value-objects/TerminationType'
 export interface GameRecord {
   gameId: string
   date: string
+  oppName: string
   color: 'white' | 'black'
   result: GameResult
   termination: TerminationType

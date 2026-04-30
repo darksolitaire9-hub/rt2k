@@ -41,12 +41,29 @@ export function scoreLeaks(mistakes: MistakeRecord[], trend: TrendReport): Leak[
     const score = group.length * LEAK_WEIGHTS[type] * timeBoost
     const evidenceGameIds = [...new Set(group.map(m => m.gameId))]
 
+    const evidence: string[] = [
+      `Detected in ${evidenceGameIds.length} different games`,
+    ]
+
+    if (type === 'FLAG_RISK') {
+      evidence.push(`${Math.round(trend.flagRate * 100)}% of your games are lost on time`)
+      const avgClock = group.reduce((acc, m) => acc + (m.clockAtMoment ?? 0), 0) / group.length
+      evidence.push(`Average clock when flagged: ${Math.round(avgClock)}s`)
+    }
+    else if (type === 'TACTICAL_MISS') {
+      evidence.push(`Average material loss per mistake: 2+ pawn units`)
+    }
+    else if (type === 'EARLY_RESIGNATION') {
+      evidence.push(`Games ended while material was still roughly equal`)
+    }
+
     leaks.push({
       type,
       score,
       title: LEAK_TITLES[type],
       description: LEAK_DESCRIPTIONS[type],
       evidenceGameIds,
+      evidence,
     })
   }
 

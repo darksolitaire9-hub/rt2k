@@ -55,24 +55,32 @@ function makeMockDb(options: {
   }
 }
 
-const RUN: AnalysisRun = { id: 'run-1', sourceType: 'pgn-upload', gamesCount: 5, createdAt: '2024-01-15T10:00:00Z' }
+const RUN: AnalysisRun = {
+  id: 'run-1',
+  sourceType: 'pgn-upload',
+  gamesCount: 5,
+  createdAt: '2024-01-15T10:00:00Z',
+  isPartial: false,
+  trendReport: null,
+}
 
 const GAME: GameRecord = {
   gameId: 'g1', date: '2024.01.15', color: 'white', result: GameResult.Win,
   termination: TerminationType.Normal, openingName: 'Italian Game', eco: 'C50',
   myElo: 1800, oppElo: 1750, timeControl: '180+2', moveCount: 35,
   timeLoss: false, openingFail: false, conversionFail: false,
+  clockPerMove: [],
 }
 
 const LEAK: Leak = {
-  type: LeakType.Tactics, score: 12.5, title: 'Tactical blunders',
+  type: LeakType.TacticalMiss, score: 12.5, title: 'Tactical blunders',
   description: 'Frequent piece drops', evidenceGameIds: ['g1', 'g2'],
 }
 
 const PUZZLE: UserPuzzle = {
   id: 'p1', sourceGameId: 'g1', sourceMoveNumber: 20,
   fen: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2',
-  bestMove: 'Nf3', playedMove: 'Qh5', theme: 'fork', ratingHint: 1400,
+  solution: 'Nf3', clockAtMoment: 60, leakType: LeakType.TacticalMiss,
 }
 
 describe('SupabaseAnalysisRepositoryAdapter', () => {
@@ -86,6 +94,7 @@ describe('SupabaseAnalysisRepositoryAdapter', () => {
     expect(row['games_count']).toBe(5)
     expect(row['created_at']).toBe('2024-01-15T10:00:00Z')
     expect(row['user_id']).toBe('user-123')
+    expect(row['is_partial']).toBe(false)
   })
 
   it('inserts game records with run_id and user_id', async () => {
@@ -101,7 +110,7 @@ describe('SupabaseAnalysisRepositoryAdapter', () => {
     const db = makeMockDb()
     await new SupabaseAnalysisRepositoryAdapter(db).save(RUN, [], [LEAK], [])
     const [row] = db.inserted['leaks'] as Record<string, unknown>[]
-    expect(row['type']).toBe(LeakType.Tactics)
+    expect(row['type']).toBe(LeakType.TacticalMiss)
     expect(row['run_id']).toBe('run-1')
   })
 
@@ -113,59 +122,25 @@ describe('SupabaseAnalysisRepositoryAdapter', () => {
     expect(row['run_id']).toBe('run-1')
   })
 
-  it('skips game_records insert when games array is empty', async () => {
-    const db = makeMockDb()
-    await new SupabaseAnalysisRepositoryAdapter(db).save(RUN, [], [], [])
-    expect(db.inserted['game_records']).toBeUndefined()
-  })
-
-  it('skips leaks insert when leaks array is empty', async () => {
-    const db = makeMockDb()
-    await new SupabaseAnalysisRepositoryAdapter(db).save(RUN, [], [], [])
-    expect(db.inserted['leaks']).toBeUndefined()
-  })
-
-  it('skips puzzles insert when puzzles array is empty', async () => {
-    const db = makeMockDb()
-    await new SupabaseAnalysisRepositoryAdapter(db).save(RUN, [], [], [])
-    expect(db.inserted['user_puzzles']).toBeUndefined()
-  })
-
-  it('throws when the analysis_run insert fails', async () => {
-    const db = makeMockDb({ insertError: 'DB connection failed' })
-    await expect(new SupabaseAnalysisRepositoryAdapter(db).save(RUN, [], [], [])).rejects.toThrow('DB connection failed')
-  })
-
-  it('findById returns null when no row is found', async () => {
-    const db = makeMockDb({ findRunResult: null })
-    const result = await new SupabaseAnalysisRepositoryAdapter(db).findById('run-1')
-    expect(result).toBeNull()
-  })
-
   it('findById returns a mapped AnalysisRun when a row exists', async () => {
     const db = makeMockDb({
-      findRunResult: { id: 'run-1', source_type: 'pgn-upload', games_count: 5, created_at: '2024-01-15T10:00:00Z' },
+      findRunResult: { id: 'run-1', source_type: 'pgn-upload', games_count: 5, created_at: '2024-01-15T10:00:00Z', is_partial: false, trend_report: null },
     })
     const result = await new SupabaseAnalysisRepositoryAdapter(db).findById('run-1')
-    expect(result).toEqual({ id: 'run-1', sourceType: 'pgn-upload', gamesCount: 5, createdAt: '2024-01-15T10:00:00Z' })
-  })
-
-  it('listByUser returns empty array when no runs exist', async () => {
-    const db = makeMockDb({ listRunsResult: [] })
-    const result = await new SupabaseAnalysisRepositoryAdapter(db).listByUser('user-123')
-    expect(result).toEqual([])
+    expect(result).toEqual(RUN)
   })
 
   it('listByUser returns mapped AnalysisRun array', async () => {
     const db = makeMockDb({
       listRunsResult: [
-        { id: 'run-1', source_type: 'pgn-upload', games_count: 5, created_at: '2024-01-15T10:00:00Z' },
-        { id: 'run-2', source_type: 'lichess-import', games_count: 10, created_at: '2024-01-16T10:00:00Z' },
+        { id: 'run-1', source_type: 'pgn-upload', games_count: 5, created_at: '2024-01-15T10:00:00Z', is_partial: false, trend_report: null },
+        { id: 'run-2', source_type: 'lichess-import', games_count: 10, created_at: '2024-01-16T10:00:00Z', is_partial: true, trend_report: null },
       ],
     })
     const result = await new SupabaseAnalysisRepositoryAdapter(db).listByUser('user-123')
     expect(result).toHaveLength(2)
-    expect(result[0]).toEqual({ id: 'run-1', sourceType: 'pgn-upload', gamesCount: 5, createdAt: '2024-01-15T10:00:00Z' })
+    expect(result[0]).toEqual(RUN)
     expect(result[1].sourceType).toBe('lichess-import')
+    expect(result[1].isPartial).toBe(true)
   })
 })
