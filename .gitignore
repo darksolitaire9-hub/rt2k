@@ -19,3 +19,6 @@ public/stockfish/
 # OS
 .DS_Store
 Thumbs.db
+
+# Data
+game_shape/
