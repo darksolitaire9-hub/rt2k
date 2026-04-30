@@ -11,13 +11,18 @@ import {
 } from '../../../shared/domain/config/leakRules'
 
 function splitPgn(pgn: string): string[] {
-  return pgn.split(/(?=\[Event )/).map(s => s.trim()).filter(s => s.startsWith('[Event'))
+  // Split at the start of any line that begins with [Event
+  return pgn
+    .split(/(?=^\[Event )/m)
+    .map(s => s.trim())
+    .filter(s => s.startsWith('[Event'))
 }
 
 function parseEval(comment: string): number | null {
   if (!comment) return null
-  if (/\[%eval\s+-#/.test(comment)) return -9999
-  if (/\[%eval\s+#/.test(comment)) return 9999
+  // Lichess format: [%eval 0.12] or [%eval #5]
+  if (comment.includes('[%eval -#')) return -9999
+  if (comment.includes('[%eval #')) return 9999
   const match = comment.match(/\[%eval\s+(-?[\d.]+)/)
   if (!match) return null
   return Math.round(parseFloat(match[1]) * 100)
@@ -25,6 +30,7 @@ function parseEval(comment: string): number | null {
 
 function parseClk(comment: string): number | null {
   if (!comment) return null
+  // Lichess format: [%clk 0:05:00]
   const match = comment.match(/\[%clk\s+(\d+):(\d+):(\d+)/)
   if (!match) return null
   return parseInt(match[1]) * 3600 + parseInt(match[2]) * 60 + parseInt(match[3])
@@ -33,12 +39,13 @@ function parseClk(comment: string): number | null {
 function mapResult(resultHeader: string, color: 'white' | 'black'): GameResult {
   if (resultHeader === '1-0') return color === 'white' ? GameResult.Win : GameResult.Loss
   if (resultHeader === '0-1') return color === 'black' ? GameResult.Win : GameResult.Loss
-  return GameResult.Draw
+  if (resultHeader === '1/2-1/2') return GameResult.Draw
+  return GameResult.Draw // Default for unknown/abandoned
 }
 
 function mapTermination(t: string): TerminationType {
   const lower = t.toLowerCase()
-  if (lower.includes('time') || lower.includes('forfeit')) return TerminationType.Time
+  if (lower.includes('time') || lower.includes('out of time')) return TerminationType.Time
   if (lower.includes('abandon')) return TerminationType.Abandoned
   if (lower.includes('resign')) return TerminationType.Resign
   return TerminationType.Normal
@@ -48,7 +55,7 @@ function computeOpeningFail(moves: ParsedMove[], color: 'white' | 'black'): bool
   return moves
     .filter(m => m.moveNumber <= OPENING_PHASE_UNTIL_MOVE)
     .some(m => {
-      if (m.evalBefore == null || m.evalAfter == null) return false
+      if (m.evalBefore === null || m.evalAfter === null) return false
       const swing = color === 'white' ? m.evalBefore - m.evalAfter : m.evalAfter - m.evalBefore
       return swing >= BLUNDER_THRESHOLD_CP
     })
@@ -59,31 +66,40 @@ function computeConversionFail(moves: ParsedMove[], color: 'white' | 'black', re
   const sign = color === 'white' ? 1 : -1
   return moves
     .filter(m => m.moveNumber > MIDDLEGAME_PHASE_UNTIL_MOVE)
-    .some(m => m.evalBefore != null && sign * m.evalBefore >= BLUNDER_THRESHOLD_CP)
+    .some(m => m.evalBefore !== null && sign * m.evalBefore >= BLUNDER_THRESHOLD_CP)
 }
 
 export class ChessJsPgnParserAdapter implements IPgnParserPort {
   parse(pgn: string, playerUsername: string): ParsedGame[] {
-    return splitPgn(pgn)
-      .map(g => this.parseOne(g, playerUsername))
+    const rawGames = splitPgn(pgn)
+    const lc = playerUsername.toLowerCase().trim()
+    
+    return rawGames
+      .map(g => this.parseOne(g, lc))
       .filter((g): g is ParsedGame => g !== null)
   }
 
-  private parseOne(gamePgn: string, playerUsername: string): ParsedGame | null {
+  private parseOne(gamePgn: string, playerUsernameLc: string): ParsedGame | null {
     const chess = new Chess()
+    
+    // chess.js 1.x fails on consecutive comments like { C1 } { C2 }. 
+    // We merge them into a single comment block.
+    const sanitizedPgn = gamePgn.replace(/\}\s*\{/g, ' ')
+
     try {
-      chess.loadPgn(gamePgn)
-    } catch {
+      chess.loadPgn(sanitizedPgn)
+    } catch (e) {
       return null
     }
 
     const h = chess.header()
-    const white = h['White'] ?? ''
-    const black = h['Black'] ?? ''
-    const lc = playerUsername.toLowerCase()
+    const white = (h['White'] || '').toLowerCase().trim()
+    const black = (h['Black'] || '').toLowerCase().trim()
+    
     const color: 'white' | 'black' | null =
-      white.toLowerCase() === lc ? 'white' :
-      black.toLowerCase() === lc ? 'black' : null
+      white === playerUsernameLc ? 'white' :
+      black === playerUsernameLc ? 'black' : null
+      
     if (!color) return null
 
     const commentMap = new Map(chess.getComments().map(c => [c.fen, c.comment]))
@@ -107,7 +123,7 @@ export class ChessJsPgnParserAdapter implements IPgnParserPort {
     const record: GameRecord = {
       gameId,
       date: h['Date'] ?? '',
-      oppName: color === 'white' ? black : white,
+      oppName: color === 'white' ? (h['Black'] ?? 'Unknown') : (h['White'] ?? 'Unknown'),
       color,
       result,
       termination,

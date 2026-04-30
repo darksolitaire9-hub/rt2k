@@ -21,18 +21,7 @@ const openingOpen = ref(false)
 
 <template>
   <div class="max-w-2xl mx-auto px-4 py-8 space-y-6">
-    <PgnUploadCard v-if="!loading && !hasResult" :loading="loading" @analyze="analyze" />
-
-    <UCard v-if="loading">
-      <div class="space-y-4 py-4 text-center">
-        <div class="flex flex-col items-center gap-2">
-          <UIcon name="i-heroicons-beaker" class="size-8 text-primary animate-pulse" />
-          <h2 class="text-lg font-semibold">Analysing your games...</h2>
-          <p class="text-sm text-muted">Running heuristics and engine confirmation locally.</p>
-        </div>
-        <UProgress animation="carousel" size="sm" />
-      </div>
-    </UCard>
+    <PgnUploadCard v-if="!hasResult" :loading="loading" @analyze="analyze" />
 
     <UAlert
       v-if="error"
@@ -52,7 +41,7 @@ const openingOpen = ref(false)
       color="warning"
       variant="soft"
       title="Analysis incomplete"
-      description="Some games are missing engine evaluations or clock data. Leak scores are estimates."
+      description="Some games were skipped due to size limits or missing data. Results are based on the most recent 100 games."
     />
 
     <template v-if="hasResult">

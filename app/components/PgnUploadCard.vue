@@ -153,7 +153,7 @@ function submit() {
             :disabled="!pgn"
             @click="submit"
           >
-            Analyse Games
+            {{ loading ? 'Analysing Latest Games...' : 'Analyse Games' }}
           </UButton>
         </div>
       </template>

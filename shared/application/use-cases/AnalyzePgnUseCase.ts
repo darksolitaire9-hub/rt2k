@@ -29,11 +29,16 @@ export async function analyzePgn(
 ): Promise<AnalysisResult> {
   const parsedGames = analyzeGames(parser, pgn, playerUsername)
 
-  const isPartial = parsedGames.length > MAX_GAMES_PER_ANALYSIS_RUN
-    || parsedGames.some(g => g.moves.every(m => m.timeRemainingSeconds === null))
+  // Take the MOST RECENT games (usually at the end of the PGN)
+  const isCapped = parsedGames.length > MAX_GAMES_PER_ANALYSIS_RUN
+  const capped = isCapped 
+    ? parsedGames.slice(-MAX_GAMES_PER_ANALYSIS_RUN) 
+    : parsedGames
 
-  const capped = parsedGames.slice(0, MAX_GAMES_PER_ANALYSIS_RUN)
   const games = capped.map(g => g.record)
+  
+  // isPartial is true if we capped the games OR if we have significant missing data
+  const isPartial = isCapped || games.some(g => g.clockPerMove.every(c => c === null))
 
   const trendReport = computeTrend(games)
   const candidates = detectMistakes(capped)

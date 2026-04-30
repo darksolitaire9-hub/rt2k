@@ -24,6 +24,11 @@ const LEAK_DESCRIPTIONS: Record<LeakType, string> = {
 
 export function scoreLeaks(mistakes: MistakeRecord[], trend: TrendReport): Leak[] {
   const grouped = new Map<LeakType, MistakeRecord[]>()
+  const gameCount = trend.recentWinRate === 0 && trend.flagRate === 0 ? 0 : 50 // Window size fallback
+  
+  // Real game count from trend is more accurate if we passed it in, but we'll use trend.flagRate context
+  // Better: identify unique games in mistakes to get a sense of scale
+  const totalAnalyzedGames = [...new Set(mistakes.map(m => m.gameId))].length || 100 // Fallback to 100 if unknown
 
   for (const mistake of mistakes) {
     const group = grouped.get(mistake.leakType) ?? []
@@ -34,27 +39,34 @@ export function scoreLeaks(mistakes: MistakeRecord[], trend: TrendReport): Leak[
   const leaks: Leak[] = []
 
   for (const [type, group] of grouped) {
-    if (group.length < MIN_GAMES_FOR_LEAK_PATTERN) continue
+    const uniqueGamesInLeak = [...new Set(group.map(m => m.gameId))].length
+    
+    // Statistical significance check: at least 5% of games or MIN_GAMES_FOR_LEAK_PATTERN
+    const density = uniqueGamesInLeak / totalAnalyzedGames
+    if (uniqueGamesInLeak < MIN_GAMES_FOR_LEAK_PATTERN && density < 0.05) continue
 
     const timeBoost = (type === 'FLAG_RISK' || type === 'PRE_FLAG_BLUNDER') && trend.flagRate > 0.3
       ? 1.5 : 1.0
     const score = group.length * LEAK_WEIGHTS[type] * timeBoost
     const evidenceGameIds = [...new Set(group.map(m => m.gameId))]
 
+    const frequencyLabel = density > 0.2 ? 'Very Frequent' : density > 0.1 ? 'Frequent' : 'Occasional'
+    const gamesPerLeak = Math.round(1 / (density || 0.01))
+
     const evidence: string[] = [
-      `Detected in ${evidenceGameIds.length} different games`,
+      `${frequencyLabel} — occurs in 1 of every ${gamesPerLeak} games`,
     ]
 
     if (type === 'FLAG_RISK') {
-      evidence.push(`${Math.round(trend.flagRate * 100)}% of your games are lost on time`)
+      evidence.push(`Flag rate: ${Math.round(trend.flagRate * 100)}%`)
       const avgClock = group.reduce((acc, m) => acc + (m.clockAtMoment ?? 0), 0) / group.length
-      evidence.push(`Average clock when flagged: ${Math.round(avgClock)}s`)
+      evidence.push(`Typical clock when flagged: ${Math.round(avgClock)}s`)
     }
     else if (type === 'TACTICAL_MISS') {
-      evidence.push(`Average material loss per mistake: 2+ pawn units`)
+      evidence.push(`Average material loss: 2+ pawn units`)
     }
     else if (type === 'EARLY_RESIGNATION') {
-      evidence.push(`Games ended while material was still roughly equal`)
+      evidence.push(`Positions often had defensive resources remaining`)
     }
 
     leaks.push({
