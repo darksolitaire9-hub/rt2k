@@ -8,11 +8,16 @@ const pgn = ref('')
 const playerUsername = ref('')
 const fileError = ref('')
 const isDragging = ref(false)
+const readProgress = ref(0)
+const isReading = ref(false)
 
 const MAX_SIZE = 50 * 1024 * 1024
 
 function handleFile(file: File) {
   fileError.value = ''
+  pgn.value = ''
+  readProgress.value = 0
+  
   if (!file.name.toLowerCase().endsWith('.pgn')) {
     fileError.value = 'Please upload a .pgn file.'
     return
@@ -21,9 +26,29 @@ function handleFile(file: File) {
     fileError.value = 'File is too large (max 50 MB).'
     return
   }
+  
   fileName.value = file.name
+  isReading.value = true
+  
   const reader = new FileReader()
-  reader.onload = e => { pgn.value = (e.target?.result as string) ?? '' }
+  
+  reader.onprogress = e => {
+    if (e.lengthComputable) {
+      readProgress.value = Math.round((e.loaded / e.total) * 100)
+    }
+  }
+
+  reader.onload = e => { 
+    pgn.value = (e.target?.result as string) ?? ''
+    readProgress.value = 100
+    isReading.value = false
+  }
+  
+  reader.onerror = () => {
+    fileError.value = 'Failed to read file.'
+    isReading.value = false
+  }
+
   reader.readAsText(file)
 }
 
@@ -53,9 +78,10 @@ function submit() {
 
     <div class="space-y-4">
       <div
+        v-if="!fileName || fileError"
         role="button"
         aria-label="Drop zone: drag and drop a PGN file here or click Choose file"
-        class="border-2 border-dashed rounded-lg p-6 text-center transition-colors"
+        class="border-2 border-dashed rounded-lg p-8 text-center transition-colors"
         :class="isDragging
           ? 'border-primary bg-primary/5'
           : 'border-gray-300 dark:border-gray-700'"
@@ -71,6 +97,7 @@ function submit() {
           @change="onFileInput"
         />
         <label for="pgn-file" class="cursor-pointer select-none">
+          <UIcon name="i-heroicons-cloud-arrow-up" class="size-8 text-gray-400 mb-2" />
           <p class="text-sm text-gray-500 dark:text-gray-400">
             Drop a <span class="font-medium">.pgn</span> file here, or
             <span class="text-primary font-medium">choose file</span>
@@ -78,9 +105,13 @@ function submit() {
         </label>
       </div>
 
-      <p class="text-xs text-gray-400 text-center">
-        We analyse games locally in your browser — nothing is uploaded.
-      </p>
+      <div v-if="isReading" class="space-y-2">
+        <div class="flex justify-between text-xs text-muted">
+          <span>Reading file...</span>
+          <span>{{ readProgress }}%</span>
+        </div>
+        <UProgress :value="readProgress" size="sm" />
+      </div>
 
       <UAlert
         v-if="fileError"
@@ -89,23 +120,47 @@ function submit() {
         :title="fileError"
       />
 
-      <template v-if="fileName">
-        <p class="text-sm font-medium truncate">{{ fileName }}</p>
+      <template v-if="fileName && !isReading && !fileError">
+        <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900 p-3 rounded-md">
+          <div class="flex items-center gap-2 min-w-0">
+            <UIcon name="i-heroicons-document-text" class="size-5 text-primary shrink-0" />
+            <p class="text-sm font-medium truncate">{{ fileName }}</p>
+          </div>
+          <UButton 
+            variant="ghost" 
+            color="neutral" 
+            icon="i-heroicons-x-mark" 
+            size="xs" 
+            @click="fileName = ''; pgn = ''; fileError = ''" 
+          />
+        </div>
 
-        <UInput
-          v-model="playerUsername"
-          placeholder="Your username in the PGN"
-        />
+        <div class="space-y-4 pt-2">
+          <UInput
+            v-model="playerUsername"
+            placeholder="Your username in the PGN"
+            icon="i-heroicons-user"
+            size="md"
+            autofocus
+            @keyup.enter="submit"
+          />
 
-        <UButton
-          block
-          :loading="loading"
-          :disabled="!playerUsername.trim() || !pgn"
-          @click="submit"
-        >
-          Analyse
-        </UButton>
+          <UButton
+            v-if="playerUsername.trim()"
+            block
+            size="lg"
+            :loading="loading"
+            :disabled="!pgn"
+            @click="submit"
+          >
+            Analyse Games
+          </UButton>
+        </div>
       </template>
+
+      <p class="text-[10px] text-gray-400 text-center uppercase tracking-wider">
+        Browser-only · Private · Local Analysis
+      </p>
     </div>
   </UCard>
 </template>

@@ -21,11 +21,15 @@ const openingOpen = ref(false)
 
 <template>
   <div class="max-w-2xl mx-auto px-4 py-8 space-y-6">
-    <PgnUploadCard :loading="loading" @analyze="analyze" />
+    <PgnUploadCard v-if="!loading && !hasResult" :loading="loading" @analyze="analyze" />
 
     <UCard v-if="loading">
-      <div class="space-y-2">
-        <p class="text-sm text-gray-500">Analysing your games…</p>
+      <div class="space-y-4 py-4 text-center">
+        <div class="flex flex-col items-center gap-2">
+          <UIcon name="i-heroicons-beaker" class="size-8 text-primary animate-pulse" />
+          <h2 class="text-lg font-semibold">Analysing your games...</h2>
+          <p class="text-sm text-muted">Running heuristics and engine confirmation locally.</p>
+        </div>
         <UProgress animation="carousel" size="sm" />
       </div>
     </UCard>
@@ -35,7 +39,13 @@ const openingOpen = ref(false)
       color="error"
       variant="soft"
       :title="error"
-    />
+      class="cursor-pointer"
+      @click="hasResult = false; error = null"
+    >
+      <template #description>
+        Click here to try again with a different file.
+      </template>
+    </UAlert>
 
     <UAlert
       v-if="hasResult && isPartial"
@@ -46,6 +56,19 @@ const openingOpen = ref(false)
     />
 
     <template v-if="hasResult">
+      <div class="flex items-center justify-between">
+        <h1 class="text-xl font-bold">Analysis Results</h1>
+        <UButton 
+          variant="ghost" 
+          color="neutral" 
+          size="sm" 
+          icon="i-heroicons-arrow-path"
+          @click="hasResult = false"
+        >
+          New Analysis
+        </UButton>
+      </div>
+
       <AnalysisSummaryCard
         :total-games="totalGames"
         :wins="wins"
@@ -66,13 +89,17 @@ const openingOpen = ref(false)
         />
       </section>
 
-      <UAlert
-        v-else
-        color="success"
-        variant="soft"
-        title="No significant leaks detected"
-        description="No major patterns found in these games."
-      />
+      <div v-else class="space-y-4">
+        <UAlert
+          color="success"
+          variant="soft"
+          title="No significant leaks detected"
+          description="No major patterns found in these games. Great job!"
+        />
+        <UButton block variant="outline" @click="hasResult = false">
+          Upload more games
+        </UButton>
+      </div>
 
       <UCard v-if="openingStats.length">
         <template #header>

@@ -42,7 +42,15 @@ export function useAnalysis() {
   const leaks = computed(() => result.value?.leaks ?? [])
   const puzzles = computed(() => result.value?.puzzles ?? [])
   const isPartial = computed(() => result.value?.isPartial ?? false)
-  const hasResult = computed(() => result.value !== null)
+  const hasResult = computed({
+    get: () => result.value !== null,
+    set: (val) => { if (!val) result.value = null }
+  })
+
+  function clear() {
+    result.value = null
+    error.value = null
+  }
 
   async function analyze(pgn: string, playerUsername: string) {
     loading.value = true
