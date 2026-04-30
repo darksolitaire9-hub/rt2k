@@ -15,8 +15,8 @@ openingStats,
 leaks,
 isPartial,
 analyze,
+preLoad,
 } = useAnalysis()
-
 const progressMessage = computed(() => {
 if (!loading.value) return ''
 const { stage, current, total } = progress.value
@@ -41,7 +41,7 @@ const openingOpen = ref(false)
     </div>
   </div>
 
-  <PgnUploadCard v-if="!hasResult && !loading" :loading="loading" @analyze="analyze" />
+  <PgnUploadCard v-if="!hasResult && !loading" :loading="loading" @analyze="analyze" @pre-load="preLoad" />
     <UAlert
       v-if="error"
       color="error"

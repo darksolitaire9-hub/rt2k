@@ -3,6 +3,15 @@ import { ChessJsPgnParserAdapter } from '../adapters/pgn/ChessJsPgnParserAdapter
 import { createStockfishAdapter } from '../adapters/engine/StockfishWasmAdapter'
 import type { AnalysisResult } from '../../shared/application/use-cases/AnalyzePgnUseCase'
 
+// Singleton adapter to keep the worker alive across re-analyses
+let cachedEngine: ReturnType<typeof createStockfishAdapter> | null = null
+function getEngine() {
+  if (!cachedEngine) {
+    cachedEngine = createStockfishAdapter('/stockfish/stockfish.js')
+  }
+  return cachedEngine
+}
+
 export function useAnalysis() {
   const result = useState<AnalysisResult | null>('rt2k-analysis', () => null)
   const loading = ref(false)
@@ -58,11 +67,25 @@ export function useAnalysis() {
     error.value = null
     result.value = null
     progress.value = { stage: 'starting', current: 0, total: 0 }
+    
+    await new Promise(resolve => setTimeout(resolve, 50))
+
     try {
-      const engine = createStockfishAdapter('/stockfish/stockfish.js')
-      result.value = await analyzePgn(pgn, playerUsername, parser, engine, days, (p) => {
+      const engine = getEngine()
+      
+      // Phase 1: Initial Burst (Last 10 games)
+      // We'll call the use case with a small limit first
+      const initialResult = await analyzePgn(pgn, playerUsername, parser, engine, days, (p) => {
         progress.value = p
-      })
+      }, 10) // Pass a limit of 10
+      
+      result.value = initialResult
+
+      // If we have more games, continue in the background
+      if (initialResult.totalGamesInWindow > 10) {
+        // We don't 'await' this so the UI stays responsive and shows initial results
+        analyzeRemaining(pgn, playerUsername, days, initialResult)
+      }
     }
     catch (e) {
       error.value = e instanceof Error ? e.message : 'Analysis failed. Check that your PGN is valid.'
@@ -72,5 +95,25 @@ export function useAnalysis() {
     }
   }
 
-  return { loading, progress, error, hasResult, totalGames, wins, losses, draws, timeLosses, winRate, ratingRange, openingStats, leaks, puzzles, isPartial, analyze }
+  async function analyzeRemaining(pgn: string, playerUsername: string, days: number, initial: AnalysisResult) {
+    try {
+      const engine = getEngine()
+      // Deep analysis for the rest (up to 100)
+      const fullResult = await analyzePgn(pgn, playerUsername, parser, engine, days, (p) => {
+        progress.value = p
+      }, 100)
+
+      // Merge results (reactive update)
+      result.value = fullResult
+    } catch (e) {
+      console.error('Background analysis failed', e)
+    }
+  }
+
+  function preLoad(pgn: string) {
+    // This triggers the engine initialization as soon as the file is dropped
+    getEngine()
+  }
+
+  return { loading, progress, error, hasResult, totalGames, wins, losses, draws, timeLosses, winRate, ratingRange, openingStats, leaks, puzzles, isPartial, analyze, preLoad }
 }

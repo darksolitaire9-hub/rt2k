@@ -1,7 +1,10 @@
 <script setup lang="ts">
 defineProps<{ loading: boolean }>()
 
-const emit = defineEmits<{ analyze: [pgn: string, username: string, days: number] }>()
+const emit = defineEmits<{ 
+  analyze: [pgn: string, username: string, days: number],
+  preLoad: [pgn: string]
+}>()
 
 const fileName = ref('')
 const pgn = ref('')
@@ -48,6 +51,7 @@ function handleFile(file: File) {
     pgn.value = (e.target?.result as string) ?? ''
     readProgress.value = 100
     isReading.value = false
+    emit('preLoad', pgn.value)
   }
   
   reader.onerror = () => {
@@ -152,7 +156,13 @@ function submit() {
           />
 
           <div class="flex flex-col gap-2">
-            <p class="text-xs font-medium text-muted px-1">Analysis Window</p>
+            <div class="px-1">
+              <p class="text-xs font-medium text-muted">Analysis Window</p>
+              <p class="text-[10px] text-muted-foreground leading-tight">
+                Hey bro, checking all your games might be slow or even crash the browser. 
+                We'll start with 10 games for instant puzzles, then do the rest in the background!
+              </p>
+            </div>
             <div class="flex gap-2">
               <UButton
                 v-for="r in ranges"

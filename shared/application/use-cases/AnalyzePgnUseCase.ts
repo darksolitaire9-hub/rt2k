@@ -19,6 +19,7 @@ export interface AnalysisResult {
   puzzles: UserPuzzle[]
   isPartial: boolean
   trendReport: TrendReport
+  totalGamesInWindow: number
 }
 
 export type ProgressCallback = (data: { stage: 'parsing' | 'detecting' | 'evaluating'; current: number; total: number }) => void
@@ -29,7 +30,8 @@ export async function analyzePgn(
   parser: IPgnParserPort,
   engine: IEnginePort,
   days: number = 90,
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  gameLimit: number = MAX_GAMES_PER_ANALYSIS_RUN
 ): Promise<AnalysisResult> {
   onProgress?.({ stage: 'parsing', current: 0, total: 1 })
   const parsedGames = analyzeGames(parser, pgn, playerUsername)
@@ -38,17 +40,19 @@ export async function analyzePgn(
   const cutoff = new Date()
   cutoff.setDate(cutoff.getDate() - days)
   
-  const recentGames = parsedGames.filter(g => {
+  const inWindow = parsedGames.filter(g => {
     const dateStr = g.record.date.replace(/\./g, '-') // YYYY.MM.DD -> YYYY-MM-DD
     const gameDate = new Date(dateStr)
     return !isNaN(gameDate.getTime()) && gameDate >= cutoff
   })
 
-  // Use recentGames if we have enough, otherwise fallback to last N games
-  const pool = recentGames.length >= 20 ? recentGames : parsedGames
-  const isCapped = pool.length > MAX_GAMES_PER_ANALYSIS_RUN
+  // Use inWindow if we have enough, otherwise fallback to last N games
+  const pool = inWindow.length >= 20 ? inWindow : parsedGames
+  const totalInWindow = pool.length
+
+  const isCapped = pool.length > gameLimit
   const capped = isCapped 
-    ? pool.slice(-MAX_GAMES_PER_ANALYSIS_RUN) 
+    ? pool.slice(-gameLimit) 
     : pool
 
   const games = capped.map(g => g.record)
@@ -56,20 +60,38 @@ export async function analyzePgn(
 
   onProgress?.({ stage: 'detecting', current: 0, total: 1 })
   const trendReport = computeTrend(games)
-  const candidates = detectMistakes(capped)
+  const allCandidates = detectMistakes(capped)
+  
+  // 2. Prioritize and Cap Candidates
+  // We prioritize Tactical Misses as they make the best puzzles
+  const prioritized = [
+    ...allCandidates.filter(c => c.leakType === 'TACTICAL_MISS'),
+    ...allCandidates.filter(c => c.leakType !== 'TACTICAL_MISS')
+  ]
+  
+  const MAX_EVALS = 100
+  const candidates = prioritized.slice(0, MAX_EVALS)
 
-  // 2. Parallel Evaluation with Concurrency Limit
+  // 3. Parallel Evaluation with Caching and Pool-aware Concurrency
   const confirmed: MistakeRecord[] = []
+  const evalCache = new Map<string, { score: number, bestMove: string }>()
   const totalCandidates = candidates.length
-  const CONCURRENCY = 3
+  const CONCURRENCY = 3 // Matches StockfishWasmAdapter POOL_SIZE
   
   for (let i = 0; i < candidates.length; i += CONCURRENCY) {
     const chunk = candidates.slice(i, i + CONCURRENCY)
     onProgress?.({ stage: 'evaluating', current: i, total: totalCandidates })
     
     const results = await Promise.all(chunk.map(async (candidate) => {
+      // Check Cache
+      if (evalCache.has(candidate.fen)) {
+        const cached = evalCache.get(candidate.fen)!
+        return { ...candidate, engineEval: cached.score, bestMove: cached.bestMove }
+      }
+
       try {
         const { score, bestMove } = await engine.evaluate(candidate.fen, ENGINE_SEARCH_DEPTH)
+        evalCache.set(candidate.fen, { score, bestMove })
         console.log(`[Trace] Eval ${candidate.gameId} m${candidate.moveNumber}: score=${score}, best=${bestMove}, type=${candidate.leakType}`)
         return { ...candidate, engineEval: score, bestMove }
       } catch (e) {
@@ -88,5 +110,5 @@ export async function analyzePgn(
   const leaks = scoreLeaks(confirmed, trendReport)
   const puzzles = buildPuzzles(confirmed)
 
-  return { games, mistakes: confirmed, leaks, puzzles, isPartial, trendReport }
+  return { games, mistakes: confirmed, leaks, puzzles, isPartial, trendReport, totalGamesInWindow: totalInWindow }
 }
