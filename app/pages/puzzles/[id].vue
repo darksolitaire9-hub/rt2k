@@ -12,15 +12,8 @@ const nextId = computed(() => puzzles.value[currentIndex.value + 1]?.id ?? null)
 <template>
   <div class="max-w-lg mx-auto px-4 py-8 space-y-6">
     <header class="flex items-center gap-3">
-      <UButton
-        variant="ghost"
-        icon="i-heroicons-arrow-left"
-        to="/puzzles"
-        aria-label="Back to puzzles"
-      />
-      <h1 class="text-xl font-bold flex-1">
-        Puzzle {{ currentIndex + 1 }} of {{ puzzles.length }}
-      </h1>
+      <UButton variant="ghost" icon="i-heroicons-arrow-left" to="/puzzles" size="sm" aria-label="Back to puzzles" />
+      <h1 class="text-xl font-bold flex-1">Puzzle {{ currentIndex + 1 }} of {{ puzzles.length }}</h1>
     </header>
 
     <UAlert

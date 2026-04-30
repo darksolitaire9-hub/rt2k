@@ -119,6 +119,7 @@ export class ChessJsPgnParserAdapter implements IPgnParserPort {
       timeLoss: termination === TerminationType.Time && result !== GameResult.Win,
       openingFail: computeOpeningFail(moves, color),
       conversionFail: computeConversionFail(moves, color, result),
+      clockPerMove: moves.map(m => m.timeRemainingSeconds),
     }
 
     return { record, moves }

@@ -9,7 +9,7 @@ const playerUsername = ref('')
 const fileError = ref('')
 const isDragging = ref(false)
 
-const MAX_SIZE = 5 * 1024 * 1024
+const MAX_SIZE = 50 * 1024 * 1024
 
 function handleFile(file: File) {
   fileError.value = ''
@@ -18,7 +18,7 @@ function handleFile(file: File) {
     return
   }
   if (file.size > MAX_SIZE) {
-    fileError.value = 'File is too large (max 5 MB).'
+    fileError.value = 'File is too large (max 50 MB).'
     return
   }
   fileName.value = file.name
@@ -53,6 +53,8 @@ function submit() {
 
     <div class="space-y-4">
       <div
+        role="button"
+        aria-label="Drop zone: drag and drop a PGN file here or click Choose file"
         class="border-2 border-dashed rounded-lg p-6 text-center transition-colors"
         :class="isDragging
           ? 'border-primary bg-primary/5'

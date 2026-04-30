@@ -1,29 +1,28 @@
 import type { MistakeRecord } from '../entities/MistakeRecord'
 import type { Leak } from '../entities/Leak'
+import type { TrendReport } from '../entities/TrendReport'
 import type { LeakType } from '../value-objects/LeakType'
 import {
-  MIN_OCCURRENCES_FOR_LEAK,
+  MIN_GAMES_FOR_LEAK_PATTERN,
   MAX_LEAKS_REPORTED,
   LEAK_WEIGHTS,
 } from '../config/leakRules'
 
 const LEAK_TITLES: Record<LeakType, string> = {
-  time: 'Time Trouble',
-  tactics: 'Tactical Mistakes',
-  opening: 'Opening Errors',
-  structure: 'Structural Weaknesses',
-  endgame: 'Endgame Inaccuracies',
+  FLAG_RISK: 'Time Trouble',
+  PRE_FLAG_BLUNDER: 'Blunders Under Time Pressure',
+  TACTICAL_MISS: 'Tactical Mistakes',
+  EARLY_RESIGNATION: 'Premature Resignations',
 }
 
 const LEAK_DESCRIPTIONS: Record<LeakType, string> = {
-  time: 'You consistently run low on the clock, leading to rushed and inaccurate moves.',
-  tactics: 'You are missing tactical opportunities or falling into tactical traps in your games.',
-  opening: 'Your opening play leads to disadvantaged positions early in the game.',
-  structure: 'Pawn structure decisions are creating long-term weaknesses in your games.',
-  endgame: 'You are losing or drawing positions that should be won in the endgame.',
+  FLAG_RISK: 'You consistently run out of time, forcing rushed moves in critical positions.',
+  PRE_FLAG_BLUNDER: 'You are losing material in the final moves before your clock runs out.',
+  TACTICAL_MISS: 'You are missing tactical opportunities or falling into tactical traps mid-game.',
+  EARLY_RESIGNATION: 'You are resigning in positions that may still have defensive resources.',
 }
 
-export function scoreLeaks(mistakes: MistakeRecord[]): Leak[] {
+export function scoreLeaks(mistakes: MistakeRecord[], trend: TrendReport): Leak[] {
   const grouped = new Map<LeakType, MistakeRecord[]>()
 
   for (const mistake of mistakes) {
@@ -35,11 +34,11 @@ export function scoreLeaks(mistakes: MistakeRecord[]): Leak[] {
   const leaks: Leak[] = []
 
   for (const [type, group] of grouped) {
-    if (group.length < MIN_OCCURRENCES_FOR_LEAK) continue
+    if (group.length < MIN_GAMES_FOR_LEAK_PATTERN) continue
 
-    const weight = LEAK_WEIGHTS[type]
-    const score = group.length * weight
-
+    const timeBoost = (type === 'FLAG_RISK' || type === 'PRE_FLAG_BLUNDER') && trend.flagRate > 0.3
+      ? 1.5 : 1.0
+    const score = group.length * LEAK_WEIGHTS[type] * timeBoost
     const evidenceGameIds = [...new Set(group.map(m => m.gameId))]
 
     leaks.push({
@@ -51,7 +50,5 @@ export function scoreLeaks(mistakes: MistakeRecord[]): Leak[] {
     })
   }
 
-  return leaks
-    .sort((a, b) => b.score - a.score)
-    .slice(0, MAX_LEAKS_REPORTED)
+  return leaks.sort((a, b) => b.score - a.score).slice(0, MAX_LEAKS_REPORTED)
 }

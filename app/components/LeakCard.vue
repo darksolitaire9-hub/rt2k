@@ -9,7 +9,7 @@ const props = defineProps<{
   }
 }>()
 
-defineEmits<{ train: [] }>()
+defineEmits<{ train: [leakType: string] }>()
 
 const severityColor = computed(() => {
   if (props.leak.score <= 40) return 'success'
@@ -17,7 +17,13 @@ const severityColor = computed(() => {
   return 'error'
 })
 
-const evidenceLabel = computed(() => {
+const severityLabel = computed(() => {
+  if (props.leak.score <= 40) return 'Minor leak'
+  if (props.leak.score <= 70) return 'Moderate leak'
+  return 'Major leak'
+})
+
+const evidenceLine = computed(() => {
   const n = props.leak.evidenceGameIds.length
   return `Found in ${n} game${n === 1 ? '' : 's'}`
 })
@@ -28,16 +34,21 @@ const evidenceLabel = computed(() => {
     <template #header>
       <div class="flex items-center justify-between gap-2">
         <h3 class="font-semibold text-base">{{ leak.title }}</h3>
-        <UBadge :color="severityColor" variant="soft" class="shrink-0">
-          {{ leak.score }}/100
-        </UBadge>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <span class="text-xs text-muted">{{ severityLabel }}</span>
+          <UBadge :color="severityColor" variant="soft">
+            {{ leak.score }}/100
+          </UBadge>
+        </div>
       </div>
     </template>
 
     <div class="space-y-3">
-      <p class="text-sm text-gray-600 dark:text-gray-400">{{ leak.description }}</p>
-      <p class="text-xs text-gray-400">{{ evidenceLabel }}</p>
-      <UButton variant="outline" size="sm" block @click="$emit('train')">
+      <p class="text-sm text-muted">{{ leak.description }}</p>
+      <ul class="text-xs text-muted list-disc list-inside space-y-0.5">
+        <li>{{ evidenceLine }}</li>
+      </ul>
+      <UButton variant="outline" size="sm" block @click="$emit('train', leak.type)">
         Train this
       </UButton>
     </div>

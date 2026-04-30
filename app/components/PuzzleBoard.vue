@@ -8,10 +8,9 @@ const props = defineProps<{
     sourceGameId: string
     sourceMoveNumber: number
     fen: string
-    bestMove: string
-    playedMove: string
-    theme: string | null
-    ratingHint: number | null
+    solution: string
+    clockAtMoment: number | null
+    leakType: string
   }
 }>()
 
@@ -41,7 +40,7 @@ function initBoard() {
       color,
       events: {
         after(orig, dest) {
-          if (orig + dest === props.puzzle.bestMove) {
+          if (orig + dest === props.puzzle.solution) {
             feedback.value = 'correct'
             cg?.set({ movable: { color: undefined } })
           }
@@ -64,13 +63,13 @@ function reset() {
 }
 
 function showHint() {
-  const from = props.puzzle.bestMove.slice(0, 2)
+  const from = props.puzzle.solution.slice(0, 2)
   cg?.selectSquare(from as Parameters<Api['selectSquare']>[0])
 }
 
 function showSolution() {
-  const orig = props.puzzle.bestMove.slice(0, 2) as Parameters<Api['move']>[0]
-  const dest = props.puzzle.bestMove.slice(2, 4) as Parameters<Api['move']>[1]
+  const orig = props.puzzle.solution.slice(0, 2) as Parameters<Api['move']>[0]
+  const dest = props.puzzle.solution.slice(2, 4) as Parameters<Api['move']>[1]
   cg?.move(orig, dest)
   cg?.set({ movable: { color: undefined } })
   feedback.value = 'revealed'
@@ -85,7 +84,7 @@ watch(() => props.puzzle.id, () => initBoard())
   <div class="space-y-4">
     <div ref="boardEl" class="w-full aspect-square" />
 
-    <p class="text-center text-sm font-medium min-h-5">
+    <p class="text-center text-sm font-medium min-h-5" aria-live="polite">
       <span v-if="feedback === 'correct'" class="text-green-600">Correct!</span>
       <span v-else-if="feedback === 'wrong'" class="text-red-500">Try again</span>
       <span v-else-if="feedback === 'revealed'" class="text-gray-400">Solution shown</span>

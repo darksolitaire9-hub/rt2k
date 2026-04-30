@@ -1,9 +1,8 @@
 export const LeakType = {
-  Time: 'time',
-  Tactics: 'tactics',
-  Opening: 'opening',
-  Structure: 'structure',
-  Endgame: 'endgame',
+  FlagRisk: 'FLAG_RISK',
+  PreFlagBlunder: 'PRE_FLAG_BLUNDER',
+  TacticalMiss: 'TACTICAL_MISS',
+  EarlyResignation: 'EARLY_RESIGNATION',
 } as const
 
 export type LeakType = typeof LeakType[keyof typeof LeakType]

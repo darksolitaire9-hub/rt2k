@@ -16,4 +16,5 @@ export interface GameRecord {
   timeLoss: boolean
   openingFail: boolean
   conversionFail: boolean
+  clockPerMove: (number | null)[]
 }

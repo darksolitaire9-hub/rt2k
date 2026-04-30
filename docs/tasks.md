@@ -45,7 +45,23 @@
 - [x] Build puzzle board component
 - [x] Build puzzle list component
 
-## Phase 8 — Persistence
+## Phase 8 — UI Polish
+- [x] Add CSS foundation (main.css with Tailwind v4 + Nuxt UI imports)
+- [x] Add root route redirect (/ → /analyze)
+- [x] Add navigation layout (default.vue with header nav)
+
+## Phase 8.5 — Spec Alignment (updated_context.md)
+- [x] Remove IPuzzleSourcePort and LocalPuzzleSourceAdapter
+- [x] Add clockPerMove[] to GameRecord
+- [x] Replace LeakType with FLAG_RISK | PRE_FLAG_BLUNDER | TACTICAL_MISS | EARLY_RESIGNATION
+- [x] Add isPartial and trendReport to AnalysisRun
+- [x] Add ComputeTrend domain service
+- [x] Rewrite DetectMistakes — clock and material heuristics, no engine calls
+- [x] Update leakRules config with new thresholds
+- [x] Update ScoreLeaks to rank leaks using TrendReport
+
+## Phase 9 — Persistence
+- [ ] Set up Supabase Auth (required before AC6)
 - [ ] Apply Supabase schema
 - [ ] Create repository implementation
 - [ ] Build "My Analyses" page

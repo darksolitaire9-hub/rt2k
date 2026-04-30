@@ -25,16 +25,12 @@ Represents one candidate mistake or turning point.
 Core fields:
 - gameId
 - moveNumber
-- phase
+- fen
 - leakType
-- fenBefore
-- playedMove
+- clockAtMoment
+- heuristicReason
+- engineEval
 - bestMove
-- evalBefore
-- evalAfter
-- evalSwing
-- timeRemainingSeconds
-- theme
 
 ## Leak
 Represents an aggregated weakness pattern.
@@ -54,10 +50,9 @@ Core fields:
 - sourceGameId
 - sourceMoveNumber
 - fen
-- bestMove
-- playedMove
-- theme
-- ratingHint
+- solution
+- clockAtMoment
+- leakType
 
 ## AnalysisRun
 Represents one complete analysis execution.
@@ -67,3 +62,5 @@ Core fields:
 - sourceType
 - gamesCount
 - createdAt
+- isPartial
+- trendReport

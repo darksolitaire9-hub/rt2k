@@ -5,14 +5,21 @@ defineProps<{
     sourceGameId: string
     sourceMoveNumber: number
     fen: string
-    bestMove: string
-    playedMove: string
-    theme: string | null
-    ratingHint: number | null
+    solution: string
+    clockAtMoment: number | null
+    leakType: string
   }
+  solved?: boolean
 }>()
 
 defineEmits<{ solve: [] }>()
+
+const LEAK_LABELS: Record<string, string> = {
+  FLAG_RISK: 'Time Risk',
+  PRE_FLAG_BLUNDER: 'Pre-Flag',
+  TACTICAL_MISS: 'Tactics',
+  EARLY_RESIGNATION: 'Early Resign',
+}
 </script>
 
 <template>
@@ -23,16 +30,16 @@ defineEmits<{ solve: [] }>()
           From your game · move {{ puzzle.sourceMoveNumber }}
         </p>
         <div class="flex flex-wrap gap-1">
-          <UBadge v-if="puzzle.theme" color="neutral" variant="soft" size="sm">
-            {{ puzzle.theme }}
+          <UBadge color="neutral" variant="soft" size="sm">
+            {{ LEAK_LABELS[puzzle.leakType] ?? puzzle.leakType }}
           </UBadge>
-          <UBadge v-if="puzzle.ratingHint" color="primary" variant="soft" size="sm">
-            ~{{ puzzle.ratingHint }}
+          <UBadge v-if="solved" color="success" variant="soft" size="sm" icon="i-heroicons-check">
+            Solved
           </UBadge>
         </div>
       </div>
       <UButton size="sm" class="shrink-0" @click="$emit('solve')">
-        Solve
+        {{ solved ? 'Review' : 'Solve' }}
       </UButton>
     </div>
   </UCard>

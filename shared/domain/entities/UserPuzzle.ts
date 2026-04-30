@@ -1,10 +1,11 @@
+import type { LeakType } from '../value-objects/LeakType'
+
 export interface UserPuzzle {
   id: string
   sourceGameId: string
   sourceMoveNumber: number
   fen: string
-  bestMove: string
-  playedMove: string
-  theme: string | null
-  ratingHint: number | null
+  solution: string
+  clockAtMoment: number | null
+  leakType: LeakType
 }

@@ -36,11 +36,10 @@ How a game ended:
 
 ## LeakType
 The category of weakness detected:
-- time
-- tactics
-- opening
-- structure
-- endgame
+- FLAG_RISK — lost on time, clock heuristic triggered
+- PRE_FLAG_BLUNDER — material lost in final moves before flagging
+- TACTICAL_MISS — material swing mid-game
+- EARLY_RESIGNATION — resigned early, possible missed defense
 
 ## Port
 An interface in `shared/domain/ports` that defines a contract for an
