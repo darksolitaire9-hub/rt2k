@@ -17,8 +17,14 @@ import {
   ENGINE_SEARCH_DEPTH_DEEP,
   MAX_GAMES_PER_ANALYSIS_RUN,
   MAX_EVALS_BURST,
+  MAX_EVALS_MID,
   MAX_EVALS_FULL,
+  BURST_GAME_LIMIT,
+  MID_GAME_LIMIT,
 } from '../../domain/config/leakRules'
+
+// Re-export so composables don't need to reach into domain config directly
+export { BURST_GAME_LIMIT, MID_GAME_LIMIT, MAX_GAMES_PER_ANALYSIS_RUN }
 
 export interface AnalysisResult {
   games: GameRecord[]
@@ -32,13 +38,20 @@ export interface AnalysisResult {
 
 export type ProgressCallback = (data: { stage: 'parsing' | 'detecting' | 'evaluating'; current: number; total: number }) => void
 
-// Depth per leak type — fast positions need a bestMove, not a precise eval
-function depthFor(leakType: string, deep: boolean): number {
-  if (deep) return ENGINE_SEARCH_DEPTH_DEEP
+export type AnalysisTier = 'burst' | 'mid' | 'deep'
+
+function depthFor(leakType: string, tier: AnalysisTier): number {
+  if (tier === 'deep') return ENGINE_SEARCH_DEPTH_DEEP
   if (leakType === LeakType.FlagRisk || leakType === LeakType.PreFlagBlunder) {
     return ENGINE_SEARCH_DEPTH_FAST
   }
   return ENGINE_SEARCH_DEPTH
+}
+
+function maxEvalsFor(tier: AnalysisTier): number {
+  if (tier === 'burst') return MAX_EVALS_BURST
+  if (tier === 'mid') return MAX_EVALS_MID
+  return MAX_EVALS_FULL
 }
 
 export async function analyzePgn(
@@ -49,7 +62,8 @@ export async function analyzePgn(
   days: number = 90,
   onProgress?: ProgressCallback,
   gameLimit: number = MAX_GAMES_PER_ANALYSIS_RUN,
-  deep: boolean = false,
+  tier: AnalysisTier = 'burst',
+  sharedCache: Map<string, { score: number; bestMove: string }> = new Map(),
 ): Promise<AnalysisResult> {
   onProgress?.({ stage: 'parsing', current: 0, total: 1 })
   const parsedGames = analyzeGames(parser, pgn, playerUsername)
@@ -82,11 +96,10 @@ export async function analyzePgn(
     ...allCandidates.filter(c => c.leakType !== LeakType.TacticalMiss),
   ]
 
-  const maxEvals = deep ? MAX_EVALS_FULL : MAX_EVALS_BURST
-  const candidates = prioritized.slice(0, maxEvals)
+  const candidates = prioritized.slice(0, maxEvalsFor(tier))
 
-  // Evaluate all candidates concurrently — the worker pool queues internally
-  const evalCache = new Map<string, { score: number; bestMove: string }>()
+  // Use shared cache so positions evaluated in earlier tiers aren't re-evaluated
+  const evalCache = sharedCache
   const totalCandidates = candidates.length
   let completed = 0
 
@@ -99,7 +112,7 @@ export async function analyzePgn(
     }
 
     try {
-      const depth = depthFor(candidate.leakType, deep)
+      const depth = depthFor(candidate.leakType, tier)
       const { score, bestMove } = await engine.evaluate(candidate.fen, depth)
       evalCache.set(candidate.fen, { score, bestMove })
       completed++

@@ -12,10 +12,23 @@ const playerUsername = ref('')
 const detectedNames = ref<string[]>([])
 const selectedRange = ref(90)
 const ranges = [
-  { label: '90 days', value: 90 },
-  { label: '180 days', value: 180 },
-  { label: 'All time', value: 9999 },
+  {
+    label: '90 days',
+    value: 90,
+    hint: 'Your recent form — best for spotting current habits',
+  },
+  {
+    label: '180 days',
+    value: 180,
+    hint: 'Last 6 months — catches patterns that come and go',
+  },
+  {
+    label: 'All time',
+    value: 9999,
+    hint: 'Full history — slowest, use for deep-rooted leaks',
+  },
 ]
+const selectedRangeHint = computed(() => ranges.find(r => r.value === selectedRange.value)?.hint ?? '')
 const fileError = ref('')
 const isDragging = ref(false)
 const readProgress = ref(0)
@@ -185,12 +198,7 @@ function submit() {
           </div>
 
           <div class="flex flex-col gap-2">
-            <div class="px-1">
-              <p class="text-xs font-medium text-muted">Analysis window</p>
-              <p class="text-[10px] text-muted-foreground leading-tight">
-                We'll show puzzles from your 10 most recent games instantly, then keep going in the background.
-              </p>
-            </div>
+            <p class="px-1 text-xs font-medium text-muted">How far back?</p>
             <div class="flex gap-2">
               <UButton
                 v-for="r in ranges"
@@ -204,6 +212,7 @@ function submit() {
                 {{ r.label }}
               </UButton>
             </div>
+            <p class="px-1 text-[11px] text-muted leading-tight transition-all">{{ selectedRangeHint }}</p>
           </div>
 
           <UButton

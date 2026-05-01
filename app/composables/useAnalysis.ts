@@ -1,13 +1,11 @@
-import { analyzePgn } from '../../shared/application/use-cases/AnalyzePgnUseCase'
+import { analyzePgn, BURST_GAME_LIMIT, MID_GAME_LIMIT, MAX_GAMES_PER_ANALYSIS_RUN } from '../../shared/application/use-cases/AnalyzePgnUseCase'
 import { ChessJsPgnParserAdapter } from '../adapters/pgn/ChessJsPgnParserAdapter'
 import { createStockfishAdapter } from '../adapters/engine/StockfishWasmAdapter'
 import type { AnalysisResult } from '../../shared/application/use-cases/AnalyzePgnUseCase'
 
 let cachedEngine: ReturnType<typeof createStockfishAdapter> | null = null
 function getEngine() {
-  if (!cachedEngine) {
-    cachedEngine = createStockfishAdapter('/stockfish/stockfish.js')
-  }
+  if (!cachedEngine) cachedEngine = createStockfishAdapter('/stockfish/stockfish.js')
   return cachedEngine
 }
 
@@ -72,19 +70,25 @@ export function useAnalysis() {
     result.value = null
     progress.value = { stage: 'starting', current: 0, total: 0 }
 
+    // Yield to browser so the spinner paints before heavy work starts
     await new Promise(resolve => setTimeout(resolve, 50))
+
+    // Shared eval cache persists across all three tiers — no position is evaluated twice
+    const evalCache = new Map<string, { score: number; bestMove: string }>()
 
     try {
       const engine = getEngine()
 
-      const initialResult = await analyzePgn(pgn, playerUsername, parser, engine, days, (p) => {
+      // Tier 1 — 3 most recent games, max 10 evals, depth 8-12 → ~1s
+      const burst = await analyzePgn(pgn, playerUsername, parser, engine, days, (p) => {
         progress.value = p
-      }, 10, false)
+      }, BURST_GAME_LIMIT, 'burst', evalCache)
 
-      result.value = initialResult
+      result.value = burst
 
-      if (initialResult.totalGamesInWindow > 10) {
-        analyzeRemaining(pgn, playerUsername, days)
+      // Kick off tiers 2+3 in the background without awaiting
+      if (burst.totalGamesInWindow > BURST_GAME_LIMIT) {
+        runBackgroundTiers(pgn, playerUsername, days, evalCache)
       }
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Analysis failed. Check that your PGN is valid.'
@@ -93,16 +97,33 @@ export function useAnalysis() {
     }
   }
 
-  async function analyzeRemaining(pgn: string, playerUsername: string, days: number) {
+  async function runBackgroundTiers(
+    pgn: string,
+    playerUsername: string,
+    days: number,
+    evalCache: Map<string, { score: number; bestMove: string }>,
+  ) {
     backgroundRunning.value = true
     backgroundProgress.value = { stage: '', current: 0, total: 0 }
+
     try {
       const engine = getEngine()
-      const fullResult = await analyzePgn(pgn, playerUsername, parser, engine, days, (p) => {
-        backgroundProgress.value = p
-      }, 100, true)
 
-      result.value = fullResult
+      // Tier 2 — up to 15 games, max 25 evals → ~3-5s, gives richer leak patterns
+      const mid = await analyzePgn(pgn, playerUsername, parser, engine, days, (p) => {
+        backgroundProgress.value = p
+      }, MID_GAME_LIMIT, 'mid', evalCache)
+
+      result.value = mid
+
+      // Tier 3 — full window, up to 100 games, max 60 evals at deeper depth
+      if (mid.totalGamesInWindow > MID_GAME_LIMIT) {
+        const deep = await analyzePgn(pgn, playerUsername, parser, engine, days, (p) => {
+          backgroundProgress.value = p
+        }, MAX_GAMES_PER_ANALYSIS_RUN, 'deep', evalCache)
+
+        result.value = deep
+      }
     } catch (e) {
       console.error('Background analysis failed', e)
     } finally {

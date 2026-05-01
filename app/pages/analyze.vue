@@ -33,9 +33,8 @@ const progressMessage = computed(() => {
 const backgroundMessage = computed(() => {
   if (!backgroundRunning.value) return ''
   const { stage, current, total } = backgroundProgress.value
-  if (stage === 'evaluating' && total > 0) return `Digging deeper... ${current}/${total}`
-  if (stage === 'parsing' || stage === 'detecting') return 'Analysing more games...'
-  return 'Analysing more games...'
+  if (stage === 'evaluating' && total > 0) return `Checking more positions... ${current}/${total}`
+  return 'Scanning more of your games...'
 })
 
 const openingOpen = ref(false)
