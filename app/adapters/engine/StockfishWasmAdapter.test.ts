@@ -53,14 +53,14 @@ describe('StockfishWasmAdapter', () => {
   it('returns the best move from the engine response', async () => {
     const engine = makeDefaultEngine('e7e5')
     const adapter = new StockfishWasmAdapter(() => engine)
-    const result = await adapter.evaluate(FEN, 18)
+    const result = await adapter.evaluate(FEN, { depth: 18 })
     expect(result.bestMove).toBe('e7e5')
   })
 
   it('returns the centipawn score from the engine response', async () => {
     const engine = makeDefaultEngine('e7e5', 42)
     const adapter = new StockfishWasmAdapter(() => engine)
-    const result = await adapter.evaluate(FEN, 18)
+    const result = await adapter.evaluate(FEN, { depth: 18 })
     expect(result.score).toBe(42)
   })
 
@@ -75,7 +75,7 @@ describe('StockfishWasmAdapter', () => {
       ],
     })
     const adapter = new StockfishWasmAdapter(() => engine)
-    const result = await adapter.evaluate(FEN, 18)
+    const result = await adapter.evaluate(FEN, { depth: 18 })
     expect(result.score).toBe(55)
   })
 
@@ -89,7 +89,7 @@ describe('StockfishWasmAdapter', () => {
       ],
     })
     const adapter = new StockfishWasmAdapter(() => engine)
-    const result = await adapter.evaluate(FEN, 18)
+    const result = await adapter.evaluate(FEN, { depth: 18 })
     expect(result.score).toBe(9999)
   })
 
@@ -103,14 +103,14 @@ describe('StockfishWasmAdapter', () => {
       ],
     })
     const adapter = new StockfishWasmAdapter(() => engine)
-    const result = await adapter.evaluate(FEN, 18)
+    const result = await adapter.evaluate(FEN, { depth: 18 })
     expect(result.score).toBe(-9999)
   })
 
   it('sends uci handshake before the position command', async () => {
     const engine = makeDefaultEngine()
     const adapter = new StockfishWasmAdapter(() => engine)
-    await adapter.evaluate(FEN, 18)
+    await adapter.evaluate(FEN, { depth: 18 })
     expect(engine.sentMessages[0]).toBe('uci')
     expect(engine.sentMessages[1]).toBe('isready')
   })
@@ -118,25 +118,40 @@ describe('StockfishWasmAdapter', () => {
   it('sends the correct position fen command', async () => {
     const engine = makeDefaultEngine()
     const adapter = new StockfishWasmAdapter(() => engine)
-    await adapter.evaluate(FEN, 18)
+    await adapter.evaluate(FEN, { depth: 18 })
     expect(engine.sentMessages).toContain(`position fen ${FEN}`)
   })
 
-  it('sends go depth with the requested depth', async () => {
+  it('sends go depth when depth option is provided', async () => {
     const engine = makeDefaultEngine()
     const adapter = new StockfishWasmAdapter(() => engine)
-    await adapter.evaluate(FEN, 12)
+    await adapter.evaluate(FEN, { depth: 12 })
     expect(engine.sentMessages).toContain('go depth 12')
   })
 
-  it('creates a fresh engine instance per evaluate call', async () => {
+  it('sends go movetime when movetime option is provided', async () => {
+    const engine = makeDefaultEngine()
+    const adapter = new StockfishWasmAdapter(() => engine)
+    await adapter.evaluate(FEN, { movetime: 150 })
+    expect(engine.sentMessages).toContain('go movetime 150')
+  })
+
+  it('movetime takes priority over depth when both are provided', async () => {
+    const engine = makeDefaultEngine()
+    const adapter = new StockfishWasmAdapter(() => engine)
+    await adapter.evaluate(FEN, { depth: 12, movetime: 100 })
+    expect(engine.sentMessages).toContain('go movetime 100')
+    expect(engine.sentMessages).not.toContain('go depth 12')
+  })
+
+  it('reuses the same engine instance across evaluate calls', async () => {
     let callCount = 0
     const adapter = new StockfishWasmAdapter(() => {
       callCount++
       return makeDefaultEngine()
     })
-    await adapter.evaluate(FEN, 18)
-    await adapter.evaluate(FEN, 18)
-    expect(callCount).toBe(2)
+    await adapter.evaluate(FEN, { depth: 18 })
+    await adapter.evaluate(FEN, { depth: 18 })
+    expect(callCount).toBe(1)
   })
 })

@@ -1,4 +1,4 @@
-import type { IEnginePort, EngineResult } from '../../../shared/domain/ports/IEnginePort'
+import type { IEnginePort, EngineResult, EvalOptions } from '../../../shared/domain/ports/IEnginePort'
 
 export interface StockfishEngine {
   postMessage(msg: string): void
@@ -9,7 +9,7 @@ export interface StockfishEngine {
 
 type QueueItem = {
   fen: string
-  depth: number
+  options: EvalOptions
   resolve: (res: EngineResult) => void
   reject: (error: Error) => void
 }
@@ -39,7 +39,7 @@ export class StockfishWasmAdapter implements IEnginePort {
     const job = this.queue.shift()
     if (!job) return
 
-    const { fen, depth, resolve, reject } = job
+    const { fen, options, resolve, reject } = job
     this.busy = true
 
     let latestScore = 0
@@ -96,21 +96,25 @@ export class StockfishWasmAdapter implements IEnginePort {
     engine.addEventListener('message', onMessage)
 
     try {
+      const goCmd = options.movetime != null
+        ? `go movetime ${options.movetime}`
+        : `go depth ${options.depth ?? 12}`
+
       engine.postMessage('ucinewgame')
       engine.postMessage(`position fen ${fen}`)
-      engine.postMessage(`go depth ${depth}`)
+      engine.postMessage(goCmd)
     } catch {
       fail(new Error('Stockfish engine failed to start search'))
     }
   }
 
-  evaluate(fen: string, depth: number): Promise<EngineResult> {
+  evaluate(fen: string, options: EvalOptions): Promise<EngineResult> {
     if (this.destroyed) {
       return Promise.reject(new Error('Stockfish adapter has been terminated'))
     }
 
     return new Promise<EngineResult>((resolve, reject) => {
-      this.queue.push({ fen, depth, resolve, reject })
+      this.queue.push({ fen, options, resolve, reject })
       this.processQueue()
     })
   }
@@ -148,6 +152,39 @@ export class StockfishWasmAdapter implements IEnginePort {
 
 export function createStockfishAdapter(workerUrl: string): StockfishWasmAdapter {
   return new StockfishWasmAdapter(
+    () => new Worker(workerUrl, { type: 'classic' }) as unknown as StockfishEngine,
+  )
+}
+
+// Distributes evaluations across N parallel Stockfish workers via round-robin.
+// Promise.all fans out all evals simultaneously, so round-robin ensures each
+// worker receives an equal share and they all run concurrently.
+export class StockfishWasmPool implements IEnginePort {
+  private readonly adapters: StockfishWasmAdapter[]
+  private index = 0
+
+  constructor(size: number, createEngine: () => StockfishEngine) {
+    this.adapters = Array.from({ length: size }, () => new StockfishWasmAdapter(createEngine))
+  }
+
+  evaluate(fen: string, options: EvalOptions): Promise<EngineResult> {
+    const adapter = this.adapters[this.index % this.adapters.length]!
+    this.index++
+    return adapter.evaluate(fen, options)
+  }
+
+  abortPending(): void {
+    for (const a of this.adapters) a.abortPending()
+  }
+
+  terminate(): void {
+    for (const a of this.adapters) a.terminate()
+  }
+}
+
+export function createStockfishPool(workerUrl: string, size: number): StockfishWasmPool {
+  return new StockfishWasmPool(
+    size,
     () => new Worker(workerUrl, { type: 'classic' }) as unknown as StockfishEngine,
   )
 }

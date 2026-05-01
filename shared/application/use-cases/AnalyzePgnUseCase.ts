@@ -4,7 +4,7 @@ import { detectMistakes } from '../../domain/services/DetectMistakes'
 import { scoreLeaks } from '../../domain/services/ScoreLeaks'
 import { buildPuzzles } from '../../domain/services/BuildPuzzles'
 import type { IPgnParserPort } from '../../domain/ports/IPgnParserPort'
-import type { IEnginePort } from '../../domain/ports/IEnginePort'
+import type { IEnginePort, EvalOptions } from '../../domain/ports/IEnginePort'
 import type { GameRecord } from '../../domain/entities/GameRecord'
 import type { Leak } from '../../domain/entities/Leak'
 import type { UserPuzzle } from '../../domain/entities/UserPuzzle'
@@ -12,9 +12,8 @@ import type { MistakeRecord } from '../../domain/entities/MistakeRecord'
 import type { TrendReport } from '../../domain/entities/TrendReport'
 import { LeakType } from '../../domain/value-objects/LeakType'
 import {
-  ENGINE_SEARCH_DEPTH,
-  ENGINE_SEARCH_DEPTH_FAST,
   ENGINE_SEARCH_DEPTH_DEEP,
+  ENGINE_MOVETIME_BURST,
   MAX_GAMES_PER_ANALYSIS_RUN,
   MAX_EVALS_BURST,
   MAX_EVALS_MID,
@@ -40,12 +39,11 @@ export type ProgressCallback = (data: { stage: 'parsing' | 'detecting' | 'evalua
 
 export type AnalysisTier = 'burst' | 'mid' | 'deep'
 
-function depthFor(leakType: string, tier: AnalysisTier): number {
-  if (tier === 'deep') return ENGINE_SEARCH_DEPTH_DEEP
-  if (leakType === LeakType.FlagRisk || leakType === LeakType.PreFlagBlunder) {
-    return ENGINE_SEARCH_DEPTH_FAST
-  }
-  return ENGINE_SEARCH_DEPTH
+// Deep tier uses fixed depth for thoroughness; burst/mid use a time cap so
+// latency is bounded regardless of position complexity.
+function evalOptionsFor(tier: AnalysisTier): EvalOptions {
+  if (tier === 'deep') return { depth: ENGINE_SEARCH_DEPTH_DEEP }
+  return { movetime: ENGINE_MOVETIME_BURST }
 }
 
 function maxEvalsFor(tier: AnalysisTier): number {
@@ -112,8 +110,7 @@ export async function analyzePgn(
     }
 
     try {
-      const depth = depthFor(candidate.leakType, tier)
-      const { score, bestMove } = await engine.evaluate(candidate.fen, depth)
+      const { score, bestMove } = await engine.evaluate(candidate.fen, evalOptionsFor(tier))
       evalCache.set(candidate.fen, { score, bestMove })
       completed++
       onProgress?.({ stage: 'evaluating', current: completed, total: totalCandidates })
