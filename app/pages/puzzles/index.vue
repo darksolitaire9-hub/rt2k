@@ -1,6 +1,17 @@
 <script setup lang="ts">
 const route = useRoute()
+const { result } = useAnalysis()
+const { start } = useTrainingSession()
 const { puzzles } = usePuzzles()
+
+// Freeze the current live puzzle list as the training snapshot the moment the
+// user enters the puzzle list. This prevents background analysis updates from
+// invalidating a puzzle ID the user is currently solving.
+onMounted(() => {
+  if (result.value?.puzzles?.length) {
+    start(result.value.puzzles)
+  }
+})
 
 const typeFilter = computed(() => route.query.type as string | undefined)
 
