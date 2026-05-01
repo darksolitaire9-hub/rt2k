@@ -4,7 +4,7 @@ import { detectMistakes } from '../../domain/services/DetectMistakes'
 import { scoreLeaks } from '../../domain/services/ScoreLeaks'
 import { buildPuzzles } from '../../domain/services/BuildPuzzles'
 import type { IPgnParserPort } from '../../domain/ports/IPgnParserPort'
-import type { IEnginePort, EvalOptions } from '../../domain/ports/IEnginePort'
+import type { EngineEvaluatorPort, EvalRequest } from '../../domain/ports/EngineEvaluatorPort'
 import type { GameRecord } from '../../domain/entities/GameRecord'
 import type { Leak } from '../../domain/entities/Leak'
 import type { UserPuzzle } from '../../domain/entities/UserPuzzle'
@@ -14,6 +14,7 @@ import { LeakType } from '../../domain/value-objects/LeakType'
 import {
   ENGINE_SEARCH_DEPTH_DEEP,
   ENGINE_MOVETIME_BURST,
+  ENGINE_MOVETIME_DEEP,
   MAX_GAMES_PER_ANALYSIS_RUN,
   MAX_EVALS_BURST,
   MAX_EVALS_MID,
@@ -39,11 +40,10 @@ export type ProgressCallback = (data: { stage: 'parsing' | 'detecting' | 'evalua
 
 export type AnalysisTier = 'burst' | 'mid' | 'deep'
 
-// Deep tier uses fixed depth for thoroughness; burst/mid use a time cap so
-// latency is bounded regardless of position complexity.
-function evalOptionsFor(tier: AnalysisTier): EvalOptions {
-  if (tier === 'deep') return { depth: ENGINE_SEARCH_DEPTH_DEEP }
-  return { movetime: ENGINE_MOVETIME_BURST }
+// Deep tier uses more time for thoroughness; burst/mid use a tight time cap.
+function movetimeFor(tier: AnalysisTier): number {
+  if (tier === 'deep') return ENGINE_MOVETIME_DEEP
+  return ENGINE_MOVETIME_BURST
 }
 
 function maxEvalsFor(tier: AnalysisTier): number {
@@ -56,7 +56,7 @@ export async function analyzePgn(
   pgn: string,
   playerUsername: string,
   parser: IPgnParserPort,
-  engine: IEnginePort,
+  engine: EngineEvaluatorPort,
   days: number = 90,
   onProgress?: ProgressCallback,
   gameLimit: number = MAX_GAMES_PER_ANALYSIS_RUN,
@@ -101,29 +101,36 @@ export async function analyzePgn(
   const totalCandidates = candidates.length
   let completed = 0
 
-  const evalPromises: Promise<MistakeRecord | null>[] = candidates.map(async (candidate) => {
-    if (evalCache.has(candidate.fen)) {
-      const cached = evalCache.get(candidate.fen)!
-      completed++
-      onProgress?.({ stage: 'evaluating', current: completed, total: totalCandidates })
-      return { ...candidate, engineEval: cached.score, bestMove: cached.bestMove } as MistakeRecord
-    }
+  const toEvaluate = candidates.filter(c => !evalCache.has(c.fen))
+  
+  // Handle cached items for progress
+  completed = candidates.length - toEvaluate.length
+  if (completed > 0) {
+    onProgress?.({ stage: 'evaluating', current: completed, total: totalCandidates })
+  }
 
-    try {
-      const { score, bestMove } = await engine.evaluate(candidate.fen, evalOptionsFor(tier))
-      evalCache.set(candidate.fen, { score, bestMove })
-      completed++
-      onProgress?.({ stage: 'evaluating', current: completed, total: totalCandidates })
-      return { ...candidate, engineEval: score, bestMove } as MistakeRecord
-    } catch {
-      completed++
-      onProgress?.({ stage: 'evaluating', current: completed, total: totalCandidates })
-      return null
-    }
+  const movetimeMs = movetimeFor(tier)
+  const evalRequests: EvalRequest[] = toEvaluate.map(c => ({
+    fen: c.fen,
+    movetimeMs
+  }))
+
+  const evalResults = await engine.evaluatePositions(evalRequests)
+  
+  // Store results in cache
+  evalResults.forEach(res => {
+    evalCache.set(res.fen, { score: res.scoreCp, bestMove: res.bestMoveUci || '' })
   })
 
-  const results = await Promise.all(evalPromises)
-  const confirmed: MistakeRecord[] = results.filter((r): r is NonNullable<typeof r> => r !== null)
+  // Reconstruct mistakes from all candidates using the cache
+  const confirmed: MistakeRecord[] = candidates.map(candidate => {
+    const cached = evalCache.get(candidate.fen)
+    if (!cached) return null
+    return { ...candidate, engineEval: cached.score, bestMove: cached.bestMove } as MistakeRecord
+  }).filter((r): r is MistakeRecord => r !== null)
+
+  // Final progress update
+  onProgress?.({ stage: 'evaluating', current: totalCandidates, total: totalCandidates })
 
   const leaks = scoreLeaks(confirmed, trendReport)
   const puzzles = buildPuzzles(confirmed)

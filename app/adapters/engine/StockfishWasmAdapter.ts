@@ -155,36 +155,3 @@ export function createStockfishAdapter(workerUrl: string): StockfishWasmAdapter 
     () => new Worker(workerUrl, { type: 'classic' }) as unknown as StockfishEngine,
   )
 }
-
-// Distributes evaluations across N parallel Stockfish workers via round-robin.
-// Promise.all fans out all evals simultaneously, so round-robin ensures each
-// worker receives an equal share and they all run concurrently.
-export class StockfishWasmPool implements IEnginePort {
-  private readonly adapters: StockfishWasmAdapter[]
-  private index = 0
-
-  constructor(size: number, createEngine: () => StockfishEngine) {
-    this.adapters = Array.from({ length: size }, () => new StockfishWasmAdapter(createEngine))
-  }
-
-  evaluate(fen: string, options: EvalOptions): Promise<EngineResult> {
-    const adapter = this.adapters[this.index % this.adapters.length]!
-    this.index++
-    return adapter.evaluate(fen, options)
-  }
-
-  abortPending(): void {
-    for (const a of this.adapters) a.abortPending()
-  }
-
-  terminate(): void {
-    for (const a of this.adapters) a.terminate()
-  }
-}
-
-export function createStockfishPool(workerUrl: string, size: number): StockfishWasmPool {
-  return new StockfishWasmPool(
-    size,
-    () => new Worker(workerUrl, { type: 'classic' }) as unknown as StockfishEngine,
-  )
-}

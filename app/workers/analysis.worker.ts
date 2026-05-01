@@ -7,7 +7,7 @@ import {
   MAX_GAMES_PER_ANALYSIS_RUN,
 } from '../../shared/application/use-cases/AnalyzePgnUseCase'
 import { ChessJsPgnParserAdapter } from '../adapters/pgn/ChessJsPgnParserAdapter'
-import { createStockfishPool } from '../adapters/engine/StockfishWasmAdapter'
+import { createStockfishPool } from '../adapters/stockfish/createStockfishPool'
 import type { AnalysisResult } from '../../shared/application/use-cases/AnalyzePgnUseCase'
 import {
   makeCacheKey,
@@ -40,7 +40,10 @@ type PrewarmTask = {
 type QueueTask = AnalyzeTask | PrewarmTask
 
 const parser = new ChessJsPgnParserAdapter()
-const engine = createStockfishPool('/stockfish/stockfish.js', ENGINE_POOL_SIZE)
+const engine = createStockfishPool({
+  workerCount: ENGINE_POOL_SIZE,
+  workerScriptUrl: new URL('../adapters/stockfish/stockfishWorker.ts', import.meta.url)
+})
 
 const evalCache = new Map<string, { score: number; bestMove: string }>()
 const burstCache = new Map<string, AnalysisResult>()

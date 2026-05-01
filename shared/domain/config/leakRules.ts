@@ -10,10 +10,11 @@ export const ENGINE_SEARCH_DEPTH = 12          // default (tactical misses)
 export const ENGINE_SEARCH_DEPTH_FAST = 8      // flag risk / pre-flag (clock positions)
 export const ENGINE_SEARCH_DEPTH_DEEP = 16     // background full-pass override
 
-// Time-bounded search for burst/mid tiers — consistent latency regardless of position complexity
+// Time-bounded search — consistent latency regardless of position complexity
 export const ENGINE_MOVETIME_BURST = 150       // ms per position for burst and mid tiers
+export const ENGINE_MOVETIME_DEEP  = 400       // ms per position for deep background tier
 
-// Parallel Stockfish workers — distributes Promise.all evals across concurrent engines
+// Parallel Stockfish workers — pool size for the proper idle/busy worker pool
 export const ENGINE_POOL_SIZE = 3
 
 // Heuristic thresholds

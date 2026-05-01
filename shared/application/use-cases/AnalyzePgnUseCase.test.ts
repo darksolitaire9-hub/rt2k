@@ -18,7 +18,7 @@ describe('AnalyzePgnUseCase - Traceability & Filtering', () => {
   }
 
   const mockEngine = {
-    evaluate: async () => ({ score: 0, bestMove: 'e2e4' })
+    evaluatePositions: async (reqs: any[]) => reqs.map(r => ({ fen: r.fen, scoreCp: 0, bestMoveUci: 'e2e4' }))
   }
 
   it('filters games by 90-day window', async () => {
