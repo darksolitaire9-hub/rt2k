@@ -5,8 +5,10 @@ export const BLUNDER_THRESHOLD_CP = 200
 export const OPENING_PHASE_UNTIL_MOVE = 10
 export const MIDDLEGAME_PHASE_UNTIL_MOVE = 30
 
-// Engine search depth for per-FEN candidate confirmation
-export const ENGINE_SEARCH_DEPTH = 18
+// Engine search depths — tiered by how much precision each leak type needs
+export const ENGINE_SEARCH_DEPTH = 12          // default (tactical misses)
+export const ENGINE_SEARCH_DEPTH_FAST = 8      // flag risk / pre-flag (clock positions)
+export const ENGINE_SEARCH_DEPTH_DEEP = 16     // background full-pass override
 
 // Heuristic thresholds
 export const MIN_CLOCK_FLAG_THRESHOLD_SECONDS = 10
@@ -15,6 +17,8 @@ export const MATERIAL_SWING_PAWN_UNITS = 1.5
 export const EARLY_RESIGNATION_MAX_MOVES = 30
 export const MAX_CANDIDATES_PER_GAME = 15
 export const MAX_GAMES_PER_ANALYSIS_RUN = 100
+export const MAX_EVALS_BURST = 30     // initial burst: fast puzzles now
+export const MAX_EVALS_FULL = 60      // background pass: more coverage
 export const MIN_GAMES_FOR_LEAK_PATTERN = 5
 export const TREND_WINDOW_GAMES = 50
 

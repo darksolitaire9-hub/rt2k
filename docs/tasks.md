@@ -60,6 +60,13 @@
 - [x] Update leakRules config with new thresholds
 - [x] Update ScoreLeaks to rank leaks using TrendReport
 
+## Phase 8.6 — Analysis Speed & UX
+- [x] Tiered engine depths per leak type + reduce MAX_EVALS cap
+- [x] Drop serial eval chunking — let worker pool queue manage concurrency
+- [x] Auto-detect player username from PGN headers in PgnUploadCard
+- [x] Add backgroundRunning state + progress to useAnalysis
+- [x] Background analysis indicator and puzzle count on analyze page
+
 ## Phase 9 — Persistence
 - [ ] Set up Supabase Auth (required before AC6)
 - [ ] Apply Supabase schema

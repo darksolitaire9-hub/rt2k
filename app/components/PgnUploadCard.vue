@@ -1,19 +1,20 @@
 <script setup lang="ts">
 defineProps<{ loading: boolean }>()
 
-const emit = defineEmits<{ 
-  analyze: [pgn: string, username: string, days: number],
+const emit = defineEmits<{
+  analyze: [pgn: string, username: string, days: number]
   preLoad: [pgn: string]
 }>()
 
 const fileName = ref('')
 const pgn = ref('')
 const playerUsername = ref('')
+const detectedNames = ref<string[]>([])
 const selectedRange = ref(90)
 const ranges = [
   { label: '90 days', value: 90 },
   { label: '180 days', value: 180 },
-  { label: 'All time', value: 9999 }
+  { label: 'All time', value: 9999 },
 ]
 const fileError = ref('')
 const isDragging = ref(false)
@@ -22,11 +23,25 @@ const isReading = ref(false)
 
 const MAX_SIZE = 50 * 1024 * 1024
 
+function detectNamesFromPgn(content: string): string[] {
+  const names: string[] = []
+  // Scan only the first 2 KB — enough to cover the first game's headers
+  const sample = content.slice(0, 2048)
+  for (const match of sample.matchAll(/\[(White|Black)\s+"([^"]+)"\]/g)) {
+    const name = match[2]
+    if (name && name !== '?' && !names.includes(name)) {
+      names.push(name)
+    }
+  }
+  return names
+}
+
 function handleFile(file: File) {
   fileError.value = ''
   pgn.value = ''
+  detectedNames.value = []
   readProgress.value = 0
-  
+
   if (!file.name.toLowerCase().endsWith('.pgn')) {
     fileError.value = 'Please upload a .pgn file.'
     return
@@ -35,25 +50,29 @@ function handleFile(file: File) {
     fileError.value = 'File is too large (max 50 MB).'
     return
   }
-  
+
   fileName.value = file.name
   isReading.value = true
-  
+
   const reader = new FileReader()
-  
+
   reader.onprogress = e => {
-    if (e.lengthComputable) {
-      readProgress.value = Math.round((e.loaded / e.total) * 100)
-    }
+    if (e.lengthComputable) readProgress.value = Math.round((e.loaded / e.total) * 100)
   }
 
-  reader.onload = e => { 
-    pgn.value = (e.target?.result as string) ?? ''
+  reader.onload = e => {
+    const content = (e.target?.result as string) ?? ''
+    pgn.value = content
     readProgress.value = 100
     isReading.value = false
-    emit('preLoad', pgn.value)
+    detectedNames.value = detectNamesFromPgn(content)
+    // Pre-fill username if only one unique name detected
+    if (detectedNames.value.length === 1) {
+      playerUsername.value = detectedNames.value[0]
+    }
+    emit('preLoad', content)
   }
-  
+
   reader.onerror = () => {
     fileError.value = 'Failed to read file.'
     isReading.value = false
@@ -92,9 +111,7 @@ function submit() {
         role="button"
         aria-label="Drop zone: drag and drop a PGN file here or click Choose file"
         class="border-2 border-dashed rounded-lg p-8 text-center transition-colors"
-        :class="isDragging
-          ? 'border-primary bg-primary/5'
-          : 'border-gray-300 dark:border-gray-700'"
+        :class="isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 dark:border-gray-700'"
         @dragover.prevent="isDragging = true"
         @dragleave.prevent="isDragging = false"
         @drop.prevent="onDrop"
@@ -123,12 +140,7 @@ function submit() {
         <UProgress :value="readProgress" size="sm" />
       </div>
 
-      <UAlert
-        v-if="fileError"
-        color="error"
-        variant="soft"
-        :title="fileError"
-      />
+      <UAlert v-if="fileError" color="error" variant="soft" :title="fileError" />
 
       <template v-if="fileName && !isReading && !fileError">
         <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900 p-3 rounded-md">
@@ -136,31 +148,47 @@ function submit() {
             <UIcon name="i-heroicons-document-text" class="size-5 text-primary shrink-0" />
             <p class="text-sm font-medium truncate">{{ fileName }}</p>
           </div>
-          <UButton 
-            variant="ghost" 
-            color="neutral" 
-            icon="i-heroicons-x-mark" 
-            size="xs" 
-            @click="fileName = ''; pgn = ''; fileError = ''" 
+          <UButton
+            variant="ghost"
+            color="neutral"
+            icon="i-heroicons-x-mark"
+            size="xs"
+            @click="fileName = ''; pgn = ''; fileError = ''; detectedNames = []; playerUsername = ''"
           />
         </div>
 
         <div class="space-y-4 pt-2">
-          <UInput
-            v-model="playerUsername"
-            placeholder="Your username in the PGN"
-            icon="i-heroicons-user"
-            size="md"
-            autofocus
-            @keyup.enter="submit"
-          />
+          <!-- Username input with auto-detect suggestions -->
+          <div class="space-y-2">
+            <UInput
+              v-model="playerUsername"
+              placeholder="Your username in the PGN"
+              icon="i-heroicons-user"
+              size="md"
+              autofocus
+              @keyup.enter="submit"
+            />
+            <div v-if="detectedNames.length > 1" class="flex flex-wrap gap-2">
+              <p class="text-xs text-muted self-center">Detected:</p>
+              <UButton
+                v-for="name in detectedNames"
+                :key="name"
+                size="xs"
+                :variant="playerUsername === name ? 'solid' : 'outline'"
+                color="neutral"
+                class="cursor-pointer"
+                @click="playerUsername = name"
+              >
+                {{ name }}
+              </UButton>
+            </div>
+          </div>
 
           <div class="flex flex-col gap-2">
             <div class="px-1">
-              <p class="text-xs font-medium text-muted">Analysis Window</p>
+              <p class="text-xs font-medium text-muted">Analysis window</p>
               <p class="text-[10px] text-muted-foreground leading-tight">
-                Hey bro, checking all your games might be slow or even crash the browser. 
-                We'll start with 10 games for instant puzzles, then do the rest in the background!
+                We'll show puzzles from your 10 most recent games instantly, then keep going in the background.
               </p>
             </div>
             <div class="flex gap-2">
@@ -181,13 +209,13 @@ function submit() {
           <UButton
             v-if="playerUsername.trim()"
             block
-            size="lg"
-            class="cursor-pointer"
+            size="xl"
+            class="cursor-pointer font-bold"
             :loading="loading"
             :disabled="!pgn"
             @click="submit"
           >
-            {{ loading ? 'Analysing Latest Games...' : 'Analyse Games' }}
+            {{ loading ? 'Getting your puzzles...' : 'Find my weaknesses' }}
           </UButton>
         </div>
       </template>

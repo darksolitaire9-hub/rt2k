@@ -3,7 +3,6 @@ import { ChessJsPgnParserAdapter } from '../adapters/pgn/ChessJsPgnParserAdapter
 import { createStockfishAdapter } from '../adapters/engine/StockfishWasmAdapter'
 import type { AnalysisResult } from '../../shared/application/use-cases/AnalyzePgnUseCase'
 
-// Singleton adapter to keep the worker alive across re-analyses
 let cachedEngine: ReturnType<typeof createStockfishAdapter> | null = null
 function getEngine() {
   if (!cachedEngine) {
@@ -15,7 +14,9 @@ function getEngine() {
 export function useAnalysis() {
   const result = useState<AnalysisResult | null>('rt2k-analysis', () => null)
   const loading = ref(false)
+  const backgroundRunning = ref(false)
   const progress = ref({ stage: '', current: 0, total: 0 })
+  const backgroundProgress = ref({ stage: '', current: 0, total: 0 })
   const error = ref<string | null>(null)
 
   const parser = new ChessJsPgnParserAdapter()
@@ -51,69 +52,89 @@ export function useAnalysis() {
   })
   const leaks = computed(() => result.value?.leaks ?? [])
   const puzzles = computed(() => result.value?.puzzles ?? [])
+  const puzzleCount = computed(() => puzzles.value.length)
   const isPartial = computed(() => result.value?.isPartial ?? false)
   const hasResult = computed({
     get: () => result.value !== null,
-    set: (val) => { if (!val) result.value = null }
+    set: (val) => { if (!val) result.value = null },
   })
 
   function clear() {
     result.value = null
     error.value = null
+    backgroundRunning.value = false
   }
 
   async function analyze(pgn: string, playerUsername: string, days: number = 90) {
     loading.value = true
+    backgroundRunning.value = false
     error.value = null
     result.value = null
     progress.value = { stage: 'starting', current: 0, total: 0 }
-    
+
     await new Promise(resolve => setTimeout(resolve, 50))
 
     try {
       const engine = getEngine()
-      
-      // Phase 1: Initial Burst (Last 10 games)
-      // We'll call the use case with a small limit first
+
       const initialResult = await analyzePgn(pgn, playerUsername, parser, engine, days, (p) => {
         progress.value = p
-      }, 10) // Pass a limit of 10
-      
+      }, 10, false)
+
       result.value = initialResult
 
-      // If we have more games, continue in the background
       if (initialResult.totalGamesInWindow > 10) {
-        // We don't 'await' this so the UI stays responsive and shows initial results
-        analyzeRemaining(pgn, playerUsername, days, initialResult)
+        analyzeRemaining(pgn, playerUsername, days)
       }
-    }
-    catch (e) {
+    } catch (e) {
       error.value = e instanceof Error ? e.message : 'Analysis failed. Check that your PGN is valid.'
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
 
-  async function analyzeRemaining(pgn: string, playerUsername: string, days: number, initial: AnalysisResult) {
+  async function analyzeRemaining(pgn: string, playerUsername: string, days: number) {
+    backgroundRunning.value = true
+    backgroundProgress.value = { stage: '', current: 0, total: 0 }
     try {
       const engine = getEngine()
-      // Deep analysis for the rest (up to 100)
       const fullResult = await analyzePgn(pgn, playerUsername, parser, engine, days, (p) => {
-        progress.value = p
-      }, 100)
+        backgroundProgress.value = p
+      }, 100, true)
 
-      // Merge results (reactive update)
       result.value = fullResult
     } catch (e) {
       console.error('Background analysis failed', e)
+    } finally {
+      backgroundRunning.value = false
     }
   }
 
-  function preLoad(pgn: string) {
-    // This triggers the engine initialization as soon as the file is dropped
+  function preLoad(_pgn: string) {
     getEngine()
   }
 
-  return { loading, progress, error, hasResult, totalGames, wins, losses, draws, timeLosses, winRate, ratingRange, openingStats, leaks, puzzles, isPartial, analyze, preLoad }
+  return {
+    loading,
+    backgroundRunning,
+    progress,
+    backgroundProgress,
+    error,
+    hasResult,
+    totalGames,
+    wins,
+    losses,
+    draws,
+    timeLosses,
+    winRate,
+    ratingRange,
+    openingStats,
+    leaks,
+    puzzles,
+    puzzleCount,
+    isPartial,
+    analyze,
+    preLoad,
+    clear,
+  }
 }

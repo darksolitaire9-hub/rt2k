@@ -1,81 +1,119 @@
 <script setup lang="ts">
 const {
-loading,
-progress,
-error,
-hasResult,
-totalGames,
-wins,
-losses,
-draws,
-timeLosses,
-winRate,
-ratingRange,
-openingStats,
-leaks,
-isPartial,
-analyze,
-preLoad,
+  loading,
+  backgroundRunning,
+  backgroundProgress,
+  progress,
+  error,
+  hasResult,
+  totalGames,
+  wins,
+  losses,
+  draws,
+  timeLosses,
+  winRate,
+  ratingRange,
+  openingStats,
+  leaks,
+  puzzleCount,
+  isPartial,
+  analyze,
+  preLoad,
 } = useAnalysis()
+
 const progressMessage = computed(() => {
-if (!loading.value) return ''
-const { stage, current, total } = progress.value
-if (stage === 'parsing') return 'Parsing PGN...'
-if (stage === 'detecting') return 'Detecting patterns...'
-if (stage === 'evaluating') {
-  return `Checking mistakes... (${current}/${total})`
-}
-return 'Starting analysis...'
+  if (!loading.value) return ''
+  const { stage, current, total } = progress.value
+  if (stage === 'parsing') return 'Reading your games...'
+  if (stage === 'detecting') return 'Spotting patterns...'
+  if (stage === 'evaluating') return `Checking positions... ${current}/${total}`
+  return 'Starting up...'
+})
+
+const backgroundMessage = computed(() => {
+  if (!backgroundRunning.value) return ''
+  const { stage, current, total } = backgroundProgress.value
+  if (stage === 'evaluating' && total > 0) return `Digging deeper... ${current}/${total}`
+  if (stage === 'parsing' || stage === 'detecting') return 'Analysing more games...'
+  return 'Analysing more games...'
 })
 
 const openingOpen = ref(false)
 </script>
 
 <template>
-<div class="max-w-2xl mx-auto px-4 py-8 space-y-6">
-  <div v-if="loading && !hasResult" class="flex flex-col items-center justify-center py-12 space-y-4">
-    <UIcon name="i-heroicons-arrow-path" class="size-8 animate-spin text-primary" />
-    <div class="text-center">
-      <p class="font-medium">{{ progressMessage }}</p>
-      <p class="text-sm text-muted">This may take a minute for large files.</p>
-    </div>
-  </div>
+  <div class="max-w-2xl mx-auto px-4 py-8 space-y-6">
 
-  <PgnUploadCard v-if="!hasResult && !loading" :loading="loading" @analyze="analyze" @pre-load="preLoad" />
+    <!-- Initial loading spinner -->
+    <div v-if="loading && !hasResult" class="flex flex-col items-center justify-center py-12 space-y-4">
+      <UIcon name="i-heroicons-arrow-path" class="size-8 animate-spin text-primary" />
+      <div class="text-center">
+        <p class="font-medium">{{ progressMessage }}</p>
+        <p class="text-sm text-muted">First puzzles coming right up.</p>
+      </div>
+    </div>
+
+    <PgnUploadCard v-if="!hasResult && !loading" :loading="loading" @analyze="analyze" @pre-load="preLoad" />
+
     <UAlert
       v-if="error"
       color="error"
       variant="soft"
       :title="error"
       class="cursor-pointer"
-      @click="hasResult = false; error = null"
+      @click="hasResult = false"
     >
-      <template #description>
-        Click here to try again with a different file.
-      </template>
+      <template #description>Click to try again with a different file.</template>
     </UAlert>
 
     <UAlert
       v-if="hasResult && isPartial"
       color="warning"
       variant="soft"
-      title="Analysis incomplete"
-      description="Some games were skipped due to size limits or missing data. Results are based on the most recent 100 games."
+      title="Partial analysis"
+      description="Results are based on the most recent games in the window — some were skipped due to size limits."
     />
 
     <template v-if="hasResult">
+
+      <!-- Header row -->
       <div class="flex items-center justify-between">
-        <h1 class="text-xl font-bold">Analysis Results</h1>
-        <UButton 
-          variant="ghost" 
-          color="neutral" 
-          size="sm" 
+        <h1 class="text-xl font-bold">Your results</h1>
+        <UButton
+          variant="ghost"
+          color="neutral"
+          size="sm"
           icon="i-heroicons-arrow-path"
           @click="hasResult = false"
         >
-          New Analysis
+          New analysis
         </UButton>
       </div>
+
+      <!-- Background analysis banner -->
+      <div
+        v-if="backgroundRunning"
+        class="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/20 text-sm text-primary"
+      >
+        <UIcon name="i-heroicons-arrow-path" class="size-4 animate-spin shrink-0" />
+        <span>{{ backgroundMessage }}</span>
+      </div>
+
+      <!-- Puzzle CTA -->
+      <UCard v-if="puzzleCount > 0">
+        <div class="flex items-center justify-between gap-4">
+          <div>
+            <p class="font-semibold text-base">
+              {{ puzzleCount }} puzzle{{ puzzleCount !== 1 ? 's' : '' }} ready
+              <span v-if="backgroundRunning" class="text-xs font-normal text-muted ml-1">(more coming)</span>
+            </p>
+            <p class="text-sm text-muted">Positions taken directly from your games</p>
+          </div>
+          <UButton size="sm" class="cursor-pointer shrink-0" @click="navigateTo('/puzzles')">
+            Train now
+          </UButton>
+        </div>
+      </UCard>
 
       <AnalysisSummaryCard
         :total-games="totalGames"
@@ -148,6 +186,7 @@ const openingOpen = ref(false)
           </table>
         </div>
       </UCard>
+
     </template>
   </div>
 </template>
