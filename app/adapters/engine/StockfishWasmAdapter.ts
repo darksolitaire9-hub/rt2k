@@ -74,13 +74,13 @@ export class StockfishWasmAdapter implements IEnginePort {
 
       if (data.startsWith('info')) {
         const mateMatch = data.match(/score mate (-?\d+)/)
-        if (mateMatch) {
+        if (mateMatch && mateMatch[1]) {
           latestScore = parseInt(mateMatch[1], 10) > 0 ? 9999 : -9999
           return
         }
 
         const cpMatch = data.match(/score cp (-?\d+)/)
-        if (cpMatch) {
+        if (cpMatch && cpMatch[1]) {
           latestScore = parseInt(cpMatch[1], 10)
         }
         return

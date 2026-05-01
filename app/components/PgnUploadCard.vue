@@ -86,7 +86,7 @@ function handleFile(file: File) {
     detectedNames.value = detectNamesFromPgn(content)
     // Pre-fill username if only one unique name detected
     if (detectedNames.value.length === 1) {
-      playerUsername.value = detectedNames.value[0]
+      playerUsername.value = detectedNames.value[0] || ''
     }
     emit('preLoad')
   }

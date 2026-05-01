@@ -1,10 +1,11 @@
 {
+  // https://nuxt.com/docs/guide/concepts/typescript
+  "extends": "./.nuxt/tsconfig.json",
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "noEmit": true
+    "skipLibCheck": true
   },
-  "include": ["shared/**/*", "app/**/*"]
+  "exclude": [
+    "app/workers/**/*",
+    "**/*.test.ts"
+  ]
 }
