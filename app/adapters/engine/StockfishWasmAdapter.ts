@@ -119,6 +119,7 @@ export class StockfishWasmAdapter implements IEnginePort {
     this.queue = []
 
     if (this.engine && this.busy) {
+      console.warn('[Engine] 🛑 ABORTING: Sending "stop" to Stockfish worker')
       try {
         this.engine.postMessage('stop')
       } catch {

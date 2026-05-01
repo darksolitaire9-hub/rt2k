@@ -98,12 +98,16 @@ async function getOrComputeBurst(
   onProgress?: (p: ProgressPayload) => void,
 ): Promise<AnalysisResult> {
   const cached = burstCache.get(cacheKey)
-  if (cached) return cached
+  if (cached) {
+    console.debug(`[Worker] 💾 Cache HIT for burst (Key: ${cacheKey.slice(0, 8)})`)
+    return cached
+  }
 
   addBurstProgressCallback(cacheKey, onProgress)
 
   let promise = inFlightBurst.get(cacheKey)
   if (!promise) {
+    console.debug(`[Worker] 🚀 Starting NEW burst (Key: ${cacheKey.slice(0, 8)})`)
     promise = analyzePgn(
       pgn,
       playerUsername,
@@ -128,6 +132,8 @@ async function getOrComputeBurst(
       })
 
     inFlightBurst.set(cacheKey, promise)
+  } else {
+    console.debug(`[Worker] 🤝 Attaching to in-flight burst (Key: ${cacheKey.slice(0, 8)})`)
   }
 
   try {
@@ -315,12 +321,14 @@ function enqueuePrewarm(task: PrewarmTask): void {
   if (inFlightBurst.has(task.cacheKey)) return
   if (queuedPrewarmKeys.has(task.cacheKey)) return
 
+  console.debug(`[Worker] 📥 Enqueue PREWARM (Key: ${task.cacheKey.slice(0, 8)})`)
   prewarmQueue.push(task)
   queuedPrewarmKeys.add(task.cacheKey)
   void processQueue()
 }
 
 function enqueueAnalyze(task: AnalyzeTask): void {
+  console.debug(`[Worker] 📥 Enqueue ANALYZE: ${task.requestId} (Key: ${task.cacheKey.slice(0, 8)})`)
   analyzeQueue.push(task)
 
   // Prewarm is low priority. If a different prewarm is actively running,
@@ -330,6 +338,7 @@ function enqueueAnalyze(task: AnalyzeTask): void {
     activeTask.cacheKey !== task.cacheKey &&
     !isCancelled(activeTask.requestId)
   ) {
+    console.warn(`[Worker] ⚡ Preempting active prewarm for request: ${task.requestId}`)
     cancelledIds.add(activeTask.requestId)
     engine.abortPending()
     pruneCancelledIds()

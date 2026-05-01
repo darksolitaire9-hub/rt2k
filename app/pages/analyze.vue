@@ -39,6 +39,19 @@ const backgroundMessage = computed(() => {
 })
 
 const openingOpen = ref(false)
+
+onMounted(() => {
+  if (typeof PerformanceObserver !== 'undefined') {
+    const observer = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        if (entry.duration > 50) {
+          console.warn(`[MainThread] ⚠️ Long task detected (${Math.round(entry.duration)}ms) - Check if offloading is working!`);
+        }
+      }
+    });
+    observer.observe({ entryTypes: ['longtask'] });
+  }
+})
 </script>
 
 <template>

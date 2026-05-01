@@ -1,7 +1,7 @@
-import type { AnalysisResult } from '../../shared/application/use-cases/AnalyzePgnUseCase'
+import { useAnalysis } from './useAnalysis'
 
 export function usePuzzles() {
-  const result = useState<AnalysisResult | null>('rt2k-analysis', () => null)
+  const { result } = useAnalysis()
   const puzzles = computed(() => result.value?.puzzles ?? [])
 
   function findById(id: string) {

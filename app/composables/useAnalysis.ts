@@ -1,7 +1,54 @@
 import type { AnalysisResult } from '../../shared/application/use-cases/AnalyzePgnUseCase'
 import type { WorkerRequest, WorkerResponse } from '../workers/analysis.worker.types'
 
+// --- Module-level singletons for persistence across routes ---
 let worker: Worker | null = null
+let activeRequestId = ''
+
+const result = ref<AnalysisResult | null>(null)
+const loading = ref(false)
+const backgroundRunning = ref(false)
+const progress = ref({ stage: '', current: 0, total: 0 })
+const backgroundProgress = ref({ stage: '', current: 0, total: 0 })
+const error = ref<string | null>(null)
+
+function handleMessage(event: MessageEvent<WorkerResponse>): void {
+  const msg = event.data
+
+  if (msg.type === 'ready') return
+  if ('requestId' in msg && msg.requestId !== activeRequestId) return
+
+  switch (msg.type) {
+    case 'progress':
+      if (msg.tier === 'burst') {
+        progress.value = msg.progress
+      } else {
+        backgroundRunning.value = true
+        backgroundProgress.value = msg.progress
+      }
+      break
+
+    case 'result':
+      result.value = msg.result
+      if (msg.tier === 'burst') {
+        loading.value = false
+      } else {
+        backgroundRunning.value = true
+      }
+      break
+
+    case 'done':
+      loading.value = false
+      backgroundRunning.value = false
+      break
+
+    case 'error':
+      error.value = msg.message
+      loading.value = false
+      backgroundRunning.value = false
+      break
+  }
+}
 
 function getWorker(): Worker | null {
   if (typeof Worker === 'undefined') return null
@@ -11,6 +58,7 @@ function getWorker(): Worker | null {
       new URL('../workers/analysis.worker.ts', import.meta.url),
       { type: 'module' },
     )
+    worker.addEventListener('message', handleMessage)
   }
 
   return worker
@@ -25,15 +73,6 @@ function createRequestId(prefix: 'req' | 'pre'): string {
 }
 
 export function useAnalysis() {
-  let activeRequestId = ''
-
-  const result = useState<AnalysisResult | null>('rt2k-analysis', () => null)
-  const loading = ref(false)
-  const backgroundRunning = ref(false)
-  const progress = ref({ stage: '', current: 0, total: 0 })
-  const backgroundProgress = ref({ stage: '', current: 0, total: 0 })
-  const error = ref<string | null>(null)
-
   const totalGames = computed(() => result.value?.games.length ?? 0)
   const wins = computed(() => result.value?.games.filter(g => g.result === 'win').length ?? 0)
   const losses = computed(() => result.value?.games.filter(g => g.result === 'loss').length ?? 0)
@@ -93,56 +132,10 @@ export function useAnalysis() {
     backgroundProgress.value = { stage: '', current: 0, total: 0 }
   }
 
-  function handleMessage(event: MessageEvent<WorkerResponse>): void {
-    const msg = event.data
-
-    if (msg.type === 'ready') return
-    if ('requestId' in msg && msg.requestId !== activeRequestId) return
-
-    switch (msg.type) {
-      case 'progress':
-        if (msg.tier === 'burst') {
-          progress.value = msg.progress
-        } else {
-          backgroundRunning.value = true
-          backgroundProgress.value = msg.progress
-        }
-        break
-
-      case 'result':
-        result.value = msg.result
-        if (msg.tier === 'burst') {
-          loading.value = false
-        } else {
-          backgroundRunning.value = true
-        }
-        break
-
-      case 'done':
-        loading.value = false
-        backgroundRunning.value = false
-        break
-
-      case 'error':
-        error.value = msg.message
-        loading.value = false
-        backgroundRunning.value = false
-        break
-    }
-  }
-
   onMounted(() => {
     const w = getWorker()
     if (!w) return
-    w.addEventListener('message', handleMessage)
     send(w, { type: 'init' })
-  })
-
-  onUnmounted(() => {
-    const w = getWorker()
-    if (!w) return
-    if (activeRequestId) send(w, { type: 'cancel', requestId: activeRequestId })
-    w.removeEventListener('message', handleMessage)
   })
 
   function clear(): void {
@@ -199,6 +192,7 @@ export function useAnalysis() {
   }
 
   return {
+    result, // Exported for usePuzzles or other synchronization needs
     loading,
     backgroundRunning,
     progress,
