@@ -19,6 +19,7 @@ const {
   isPartial,
   analyze,
   preLoad,
+  preAnalyze,
 } = useAnalysis()
 
 const progressMessage = computed(() => {
@@ -52,7 +53,13 @@ const openingOpen = ref(false)
       </div>
     </div>
 
-    <PgnUploadCard v-if="!hasResult && !loading" :loading="loading" @analyze="analyze" @pre-load="preLoad" />
+    <PgnUploadCard
+      v-if="!hasResult && !loading"
+      :loading="loading"
+      @analyze="analyze"
+      @pre-load="preLoad"
+      @pre-analyze="(pgn, u) => preAnalyze(pgn, u)"
+    />
 
     <UAlert
       v-if="error"

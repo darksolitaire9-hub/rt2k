@@ -3,7 +3,8 @@ defineProps<{ loading: boolean }>()
 
 const emit = defineEmits<{
   analyze: [pgn: string, username: string, days: number]
-  preLoad: [pgn: string]
+  preLoad: []
+  preAnalyze: [pgn: string, username: string]
 }>()
 
 const fileName = ref('')
@@ -83,7 +84,11 @@ function handleFile(file: File) {
     if (detectedNames.value.length === 1) {
       playerUsername.value = detectedNames.value[0]
     }
-    emit('preLoad', content)
+    emit('preLoad')
+    // If username is already known (auto-detected), kick off silent pre-analysis immediately
+    if (playerUsername.value) {
+      emit('preAnalyze', content, playerUsername.value)
+    }
   }
 
   reader.onerror = () => {
@@ -104,6 +109,14 @@ function onDrop(event: DragEvent) {
   const file = event.dataTransfer?.files[0]
   if (file) handleFile(file)
 }
+
+// Fire pre-analysis as soon as both pgn and username are known (covers the case where
+// the user types their username after the file loads rather than auto-detection filling it)
+watch([pgn, playerUsername], ([newPgn, newUsername]: [string, string]) => {
+  if (newPgn && newUsername.trim()) {
+    emit('preAnalyze', newPgn, newUsername.trim())
+  }
+})
 
 function submit() {
   if (pgn.value && playerUsername.value.trim()) {
