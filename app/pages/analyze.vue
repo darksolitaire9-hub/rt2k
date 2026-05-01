@@ -58,7 +58,7 @@ const openingOpen = ref(false)
       :loading="loading"
       @analyze="analyze"
       @pre-load="preLoad"
-      @pre-analyze="(pgn, u) => preAnalyze(pgn, u)"
+      @pre-analyze="(pgn, u, days) => preAnalyze(pgn, u, days)"
     />
 
     <UAlert

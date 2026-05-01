@@ -4,7 +4,7 @@ defineProps<{ loading: boolean }>()
 const emit = defineEmits<{
   analyze: [pgn: string, username: string, days: number]
   preLoad: []
-  preAnalyze: [pgn: string, username: string]
+  preAnalyze: [pgn: string, username: string, days: number]
 }>()
 
 const fileName = ref('')
@@ -50,6 +50,9 @@ function detectNamesFromPgn(content: string): string[] {
   return names
 }
 
+const pgnVersion = ref(0)
+const lastPrewarmSignature = ref('')
+
 function handleFile(file: File) {
   fileError.value = ''
   pgn.value = ''
@@ -77,6 +80,7 @@ function handleFile(file: File) {
   reader.onload = e => {
     const content = (e.target?.result as string) ?? ''
     pgn.value = content
+    pgnVersion.value++
     readProgress.value = 100
     isReading.value = false
     detectedNames.value = detectNamesFromPgn(content)
@@ -85,10 +89,6 @@ function handleFile(file: File) {
       playerUsername.value = detectedNames.value[0]
     }
     emit('preLoad')
-    // If username is already known (auto-detected), kick off silent pre-analysis immediately
-    if (playerUsername.value) {
-      emit('preAnalyze', content, playerUsername.value)
-    }
   }
 
   reader.onerror = () => {
@@ -110,11 +110,16 @@ function onDrop(event: DragEvent) {
   if (file) handleFile(file)
 }
 
-// Fire pre-analysis as soon as both pgn and username are known (covers the case where
-// the user types their username after the file loads rather than auto-detection filling it)
-watch([pgn, playerUsername], ([newPgn, newUsername]: [string, string]) => {
-  if (newPgn && newUsername.trim()) {
-    emit('preAnalyze', newPgn, newUsername.trim())
+// Fire pre-analysis as soon as both pgn and username are known.
+// Dedupe using a signature to avoid redundant messages while typing.
+watch([pgnVersion, playerUsername, selectedRange], ([version, newUsername, newDays]) => {
+  const username = newUsername.trim()
+  if (pgn.value && username) {
+    const signature = `${version}::${username}::${newDays}`
+    if (signature !== lastPrewarmSignature.value) {
+      lastPrewarmSignature.value = signature
+      emit('preAnalyze', pgn.value, username, newDays)
+    }
   }
 })
 

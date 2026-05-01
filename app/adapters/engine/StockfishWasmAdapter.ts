@@ -3,77 +3,150 @@ import type { IEnginePort, EngineResult } from '../../../shared/domain/ports/IEn
 export interface StockfishEngine {
   postMessage(msg: string): void
   addEventListener(type: 'message', handler: (event: { data: string }) => void): void
+  removeEventListener(type: 'message', handler: (event: { data: string }) => void): void
   terminate(): void
 }
 
+type QueueItem = {
+  fen: string
+  depth: number
+  resolve: (res: EngineResult) => void
+  reject: (error: Error) => void
+}
+
 export class StockfishWasmAdapter implements IEnginePort {
-  private workers: { engine: StockfishEngine; busy: boolean }[] = []
-  private queue: { fen: string; depth: number; resolve: (res: EngineResult) => void }[] = []
-  private POOL_SIZE = 3
+  private engine: StockfishEngine | null = null
+  private queue: QueueItem[] = []
+  private busy = false
+  private destroyed = false
+  private activeHandler: ((event: { data: string }) => void) | null = null
 
   constructor(private readonly createEngine: () => StockfishEngine) {}
 
-  private getFreeWorker() {
-    return this.workers.find(w => !w.busy)
+  private ensureEngine(): StockfishEngine {
+    if (!this.engine) {
+      this.engine = this.createEngine()
+      this.engine.postMessage('uci')
+      this.engine.postMessage('isready')
+    }
+    return this.engine
   }
 
-  private async processQueue() {
-    const freeWorker = this.getFreeWorker()
-    if (!freeWorker || this.queue.length === 0) return
+  private processQueue(): void {
+    if (this.destroyed || this.busy || this.queue.length === 0) return
 
-    const { fen, depth, resolve } = this.queue.shift()!
-    freeWorker.busy = true
+    const engine = this.ensureEngine()
+    const job = this.queue.shift()
+    if (!job) return
+
+    const { fen, depth, resolve, reject } = job
+    this.busy = true
 
     let latestScore = 0
+    let settled = false
+
+    const cleanup = () => {
+      if (this.activeHandler) {
+        engine.removeEventListener('message', this.activeHandler)
+        this.activeHandler = null
+      }
+      this.busy = false
+    }
+
+    const finish = (result: EngineResult) => {
+      if (settled) return
+      settled = true
+      cleanup()
+      resolve(result)
+      this.processQueue()
+    }
+
+    const fail = (error: Error) => {
+      if (settled) return
+      settled = true
+      cleanup()
+      reject(error)
+      this.processQueue()
+    }
+
     const onMessage = ({ data }: { data: string }) => {
+      if (typeof data !== 'string') return
+
       if (data.startsWith('info')) {
         const mateMatch = data.match(/score mate (-?\d+)/)
         if (mateMatch) {
-          latestScore = parseInt(mateMatch[1]) > 0 ? 9999 : -9999
-        } else {
-          const cpMatch = data.match(/score cp (-?\d+)/)
-          if (cpMatch) latestScore = parseInt(cpMatch[1])
+          latestScore = parseInt(mateMatch[1], 10) > 0 ? 9999 : -9999
+          return
         }
+
+        const cpMatch = data.match(/score cp (-?\d+)/)
+        if (cpMatch) {
+          latestScore = parseInt(cpMatch[1], 10)
+        }
+        return
       }
+
       if (data.startsWith('bestmove')) {
         const bestMove = data.split(' ')[1] ?? ''
-        freeWorker.engine.removeEventListener('message', onMessage)
-        freeWorker.busy = false
-        resolve({ score: latestScore, bestMove })
-        this.processQueue() // Pick up next task
+        finish({ score: latestScore, bestMove })
       }
     }
 
-    freeWorker.engine.addEventListener('message', onMessage)
-    freeWorker.engine.postMessage(`position fen ${fen}`)
-    freeWorker.engine.postMessage(`go depth ${depth}`)
+    this.activeHandler = onMessage
+    engine.addEventListener('message', onMessage)
+
+    try {
+      engine.postMessage('ucinewgame')
+      engine.postMessage(`position fen ${fen}`)
+      engine.postMessage(`go depth ${depth}`)
+    } catch {
+      fail(new Error('Stockfish engine failed to start search'))
+    }
   }
 
   evaluate(fen: string, depth: number): Promise<EngineResult> {
-    // Initialize pool on first use
-    if (this.workers.length === 0) {
-      for (let i = 0; i < this.POOL_SIZE; i++) {
-        const engine = this.createEngine()
-        engine.postMessage('uci')
-        this.workers.push({ engine, busy: false })
-      }
+    if (this.destroyed) {
+      return Promise.reject(new Error('Stockfish adapter has been terminated'))
     }
 
-    return new Promise((resolve) => {
-      this.queue.push({ fen, depth, resolve })
+    return new Promise<EngineResult>((resolve, reject) => {
+      this.queue.push({ fen, depth, resolve, reject })
       this.processQueue()
     })
   }
 
-  terminate() {
-    for (const w of this.workers) {
-      w.engine.terminate()
+  abortPending(): void {
+    this.queue = []
+
+    if (this.engine && this.busy) {
+      try {
+        this.engine.postMessage('stop')
+      } catch {
+      }
     }
-    this.workers = []
+  }
+
+  terminate(): void {
+    this.abortPending()
+    this.destroyed = true
+
+    if (this.engine && this.activeHandler) {
+      this.engine.removeEventListener('message', this.activeHandler)
+      this.activeHandler = null
+    }
+
+    if (this.engine) {
+      this.engine.terminate()
+      this.engine = null
+    }
+
+    this.busy = false
     this.queue = []
   }
 }
 
 export function createStockfishAdapter(workerUrl: string): StockfishWasmAdapter {
-  return new StockfishWasmAdapter(() => new Worker(workerUrl) as unknown as StockfishEngine)
+  return new StockfishWasmAdapter(
+    () => new Worker(workerUrl, { type: 'classic' }) as unknown as StockfishEngine,
+  )
 }

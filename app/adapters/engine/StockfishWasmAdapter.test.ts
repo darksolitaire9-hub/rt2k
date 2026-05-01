@@ -26,6 +26,12 @@ function makeMockEngine(
     addEventListener(type, handler) {
       if (type === 'message') handlers.push(handler)
     },
+    removeEventListener(type, handler) {
+      if (type === 'message') {
+        const idx = handlers.indexOf(handler)
+        if (idx !== -1) handlers.splice(idx, 1)
+      }
+    },
     terminate() {},
   }
 }
