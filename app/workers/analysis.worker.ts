@@ -46,6 +46,26 @@ const engine = createStockfishPool({
 })
 
 const evalCache = new Map<string, { score: number; bestMove: string }>()
+const pgnCache = new Map<string, any[]>() // cache parsed games by PGN string (or hash)
+
+function getParsedGames(pgn: string, playerUsername: string): any[] {
+  // Use the PGN string as a key. For very large PGNs, this is still better than re-parsing.
+  // In a production app, we might use a hash or a more robust cache.
+  const cached = pgnCache.get(pgn)
+  if (cached) return cached
+
+  const parsed = parser.parse(pgn, playerUsername)
+  pgnCache.set(pgn, parsed)
+  
+  // Keep cache small
+  if (pgnCache.size > 2) {
+    const firstKey = pgnCache.keys().next().value
+    if (firstKey) pgnCache.delete(firstKey)
+  }
+  
+  return parsed
+}
+
 const burstCache = new Map<string, AnalysisResult>()
 const inFlightBurst = new Map<string, Promise<AnalysisResult>>()
 const burstProgressCallbacks = new Map<string, Set<(p: ProgressPayload) => void>>()
@@ -112,8 +132,12 @@ async function getOrComputeBurst(
   let promise = inFlightBurst.get(cacheKey)
   if (!promise) {
     console.debug(`[Worker] 🚀 Starting NEW burst (Key: ${cacheKey.slice(0, 8)})`)
+    
+    // Parse once and pass to all tiers
+    const parsedGames = getParsedGames(pgn, playerUsername)
+
     promise = analyzePgn(
-      pgn,
+      parsedGames,
       playerUsername,
       parser,
       engine,
@@ -173,8 +197,11 @@ async function runTier(
     return isCancelled(requestId) ? null : result
   }
 
+  // Parse once and pass to all tiers
+  const parsedGames = getParsedGames(pgn, playerUsername)
+
   const result = await analyzePgn(
-    pgn,
+    parsedGames,
     playerUsername,
     parser,
     engine,

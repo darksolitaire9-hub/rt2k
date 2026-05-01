@@ -53,7 +53,7 @@ function maxEvalsFor(tier: AnalysisTier): number {
 }
 
 export async function analyzePgn(
-  pgn: string,
+  pgn: string | ParsedGame[],
   playerUsername: string,
   parser: IPgnParserPort,
   engine: EngineEvaluatorPort,
@@ -64,10 +64,13 @@ export async function analyzePgn(
   sharedCache: Map<string, { score: number; bestMove: string }> = new Map(),
 ): Promise<AnalysisResult> {
   onProgress?.({ stage: 'parsing', current: 0, total: 1 })
-  const parsedGames = analyzeGames(parser, pgn, playerUsername)
-
+  
   const cutoff = new Date()
   cutoff.setDate(cutoff.getDate() - days)
+
+  const parsedGames = typeof pgn === 'string' 
+    ? analyzeGames(parser, pgn, playerUsername, { since: cutoff, limit: gameLimit + 20 })
+    : pgn
 
   const inWindow = parsedGames.filter(g => {
     const dateStr = g.record.date.replace(/\./g, '-')

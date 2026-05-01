@@ -1,5 +1,5 @@
 import { Chess } from 'chess.js'
-import type { IPgnParserPort } from '../../../shared/domain/ports/IPgnParserPort'
+import type { IPgnParserPort, PgnParserOptions } from '../../../shared/domain/ports/IPgnParserPort'
 import type { ParsedGame, ParsedMove } from '../../../shared/domain/entities/ParsedGame'
 import type { GameRecord } from '../../../shared/domain/entities/GameRecord'
 import { GameResult } from '../../../shared/domain/value-objects/GameResult'
@@ -67,20 +67,48 @@ function computeConversionFail(moves: ParsedMove[], color: 'white' | 'black', re
 }
 
 export class ChessJsPgnParserAdapter implements IPgnParserPort {
-  parse(pgn: string, playerUsername: string): ParsedGame[] {
+  parse(pgn: string, playerUsername: string, options?: PgnParserOptions): ParsedGame[] {
     const rawGames = splitPgn(pgn)
     const lc = playerUsername.toLowerCase().trim()
+    const since = options?.since
+    const limit = options?.limit
     
-    // Reverse to process most recent games first
-    const reversed = rawGames.reverse()
+    const results: ParsedGame[] = []
     
-    return reversed
-      .map(g => this.parseOne(g, lc))
-      .filter((g): g is ParsedGame => g !== null)
+    // Process in reverse (most recent first) to satisfy limit early
+    for (let i = rawGames.length - 1; i >= 0; i--) {
+      if (limit && results.length >= limit) break
+      
+      const gamePgn = rawGames[i]
+      const headers = this.parseHeaders(gamePgn)
+      
+      // Filter by username
+      const white = (headers['White'] || '').toLowerCase().trim()
+      const black = (headers['Black'] || '').toLowerCase().trim()
+      if (white !== lc && black !== lc) continue
+      
+      // Filter by date if provided
+      if (since) {
+        const dateStr = (headers['Date'] || '').replace(/\./g, '-')
+        const gameDate = new Date(dateStr)
+        if (!isNaN(gameDate.getTime()) && gameDate < since) {
+          // Since we process in reverse, once we hit a game older than 'since',
+          // we can stop (assuming PGN is roughly chronological).
+          // However, PGNs aren't always perfect, so we might want to continue 
+          // a bit or just rely on the chronological assumption.
+          // For safety, let's just continue for now but skip this game.
+          continue 
+        }
+      }
+      
+      const parsed = this.parseOneWithHeaders(gamePgn, lc, headers)
+      if (parsed) results.push(parsed)
+    }
+    
+    return results
   }
 
-  private parseOne(gamePgn: string, playerUsernameLc: string): ParsedGame | null {
-    const headers = this.parseHeaders(gamePgn)
+  private parseOneWithHeaders(gamePgn: string, playerUsernameLc: string, headers: Record<string, string>): ParsedGame | null {
     const white = (headers['White'] || '').toLowerCase().trim()
     const black = (headers['Black'] || '').toLowerCase().trim()
     
@@ -99,7 +127,6 @@ export class ChessJsPgnParserAdapter implements IPgnParserPort {
       return null
     }
 
-    const h = chess.header()
     const commentMap = new Map(chess.getComments().map(c => [c.fen, c.comment]))
     const history = chess.history({ verbose: true })
 
@@ -112,24 +139,24 @@ export class ChessJsPgnParserAdapter implements IPgnParserPort {
       timeRemainingSeconds: parseClk(commentMap.get(move.after) ?? ''),
     }))
 
-    const resultHeader = h['Result'] ?? '*'
+    const resultHeader = headers['Result'] ?? '*'
     const result = mapResult(resultHeader, color)
-    const termination = mapTermination(h['Termination'] ?? '')
-    const siteHeader = h['Site'] ?? ''
+    const termination = mapTermination(headers['Termination'] ?? '')
+    const siteHeader = headers['Site'] ?? ''
     const gameId = siteHeader.split('/').pop() || `game-${Math.random().toString(36).slice(2)}`
 
     const record: GameRecord = {
       gameId,
-      date: h['Date'] ?? '',
-      oppName: color === 'white' ? (h['Black'] ?? 'Unknown') : (h['White'] ?? 'Unknown'),
+      date: headers['Date'] ?? '',
+      oppName: color === 'white' ? (headers['Black'] ?? 'Unknown') : (headers['White'] ?? 'Unknown'),
       color,
       result,
       termination,
-      openingName: h['Opening'] ?? '',
-      eco: h['ECO'] ?? '',
-      myElo: parseInt(color === 'white' ? (h['WhiteElo'] ?? '0') : (h['BlackElo'] ?? '0')),
-      oppElo: parseInt(color === 'white' ? (h['BlackElo'] ?? '0') : (h['WhiteElo'] ?? '0')),
-      timeControl: h['TimeControl'] ?? '',
+      openingName: headers['Opening'] ?? '',
+      eco: headers['ECO'] ?? '',
+      myElo: parseInt(color === 'white' ? (headers['WhiteElo'] ?? '0') : (headers['BlackElo'] ?? '0')),
+      oppElo: parseInt(color === 'white' ? (headers['BlackElo'] ?? '0') : (headers['WhiteElo'] ?? '0')),
+      timeControl: headers['TimeControl'] ?? '',
       moveCount: Math.ceil(history.length / 2),
       timeLoss: termination === TerminationType.Time && result !== GameResult.Win,
       openingFail: computeOpeningFail(moves, color),
