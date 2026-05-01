@@ -9,15 +9,25 @@ import {
   MAX_CANDIDATES_PER_GAME,
 } from '../config/leakRules'
 
-const PIECE_VALUES: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9 }
+const PIECE_VALUES: Record<string, number> = { 
+  p: 1, n: 3, b: 3, r: 5, q: 9,
+  P: 1, N: 3, B: 3, R: 5, Q: 9
+}
 
 function materialValue(fen: string, color: 'white' | 'black'): number {
   let total = 0
-  for (const ch of fen.split(' ')[0]) {
-    const lower = ch.toLowerCase()
-    if (!(lower in PIECE_VALUES)) continue
-    const isWhite = ch !== lower
-    if ((color === 'white') === isWhite) total += PIECE_VALUES[lower]
+  const board = fen.split(' ', 1)[0]
+  const isWhiteTarget = color === 'white'
+  
+  for (let i = 0; i < board.length; i++) {
+    const ch = board[i]
+    const val = PIECE_VALUES[ch]
+    if (val === undefined) continue
+    
+    const isWhitePiece = ch <= 'Z' // Uppercase are white
+    if (isWhiteTarget === isWhitePiece) {
+      total += val
+    }
   }
   return total
 }

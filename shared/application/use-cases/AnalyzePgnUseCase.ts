@@ -63,6 +63,7 @@ export async function analyzePgn(
   tier: AnalysisTier = 'burst',
   sharedCache: Map<string, { score: number; bestMove: string }> = new Map(),
 ): Promise<AnalysisResult> {
+  const t0 = performance.now()
   onProgress?.({ stage: 'parsing', current: 0, total: 1 })
   
   const cutoff = new Date()
@@ -71,6 +72,7 @@ export async function analyzePgn(
   const parsedGames = typeof pgn === 'string' 
     ? analyzeGames(parser, pgn, playerUsername, { since: cutoff, limit: gameLimit + 20 })
     : pgn
+  const t1 = performance.now()
 
   const inWindow = parsedGames.filter(g => {
     const dateStr = g.record.date.replace(/\./g, '-')
@@ -90,6 +92,7 @@ export async function analyzePgn(
   onProgress?.({ stage: 'detecting', current: 0, total: 1 })
   const trendReport = computeTrend(games)
   const allCandidates = detectMistakes(capped)
+  const t2 = performance.now()
 
   // Prioritise tactical misses — they make the highest-quality puzzles
   const prioritized = [
@@ -118,7 +121,9 @@ export async function analyzePgn(
     movetimeMs
   }))
 
+  const tEval0 = performance.now()
   const evalResults = await engine.evaluatePositions(evalRequests)
+  const tEval1 = performance.now()
   
   // Store results in cache
   evalResults.forEach(res => {
@@ -135,8 +140,17 @@ export async function analyzePgn(
   // Final progress update
   onProgress?.({ stage: 'evaluating', current: totalCandidates, total: totalCandidates })
 
+  const t3 = performance.now()
   const leaks = scoreLeaks(confirmed, trendReport)
   const puzzles = buildPuzzles(confirmed)
+  const t4 = performance.now()
+
+  console.debug(`[AnalyzePgn] ⏱️ Tier: ${tier}
+    - Total: ${(t4 - t0).toFixed(1)}ms
+    - Parsing: ${(t1 - t0).toFixed(1)}ms
+    - Detecting: ${(t2 - t1).toFixed(1)}ms
+    - Evaluating: ${(tEval1 - tEval0).toFixed(1)}ms (Positions: ${evalRequests.length})
+    - Post-processing: ${(t4 - t3).toFixed(1)}ms`)
 
   return { games, mistakes: confirmed, leaks, puzzles, isPartial, trendReport, totalGamesInWindow: totalInWindow }
 }

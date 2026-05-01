@@ -10,11 +10,24 @@ import {
   MIDDLEGAME_PHASE_UNTIL_MOVE,
 } from '../../../shared/domain/config/leakRules'
 
-function splitPgn(pgn: string): string[] {
-  return pgn
-    .split(/(?=^\[Event )/m)
-    .map(s => s.trim())
-    .filter(s => s.startsWith('[Event'))
+function splitPgnOptimized(pgn: string): string[] {
+  const games: string[] = []
+  const marker = '[Event '
+  let start = pgn.indexOf(marker)
+  
+  if (start === -1) return []
+
+  while (start !== -1) {
+    const next = pgn.indexOf(marker, start + marker.length)
+    if (next === -1) {
+      games.push(pgn.slice(start).trim())
+      break
+    }
+    games.push(pgn.slice(start, next).trim())
+    start = next
+  }
+  
+  return games
 }
 
 function parseEval(comment: string): number | null {
@@ -68,12 +81,14 @@ function computeConversionFail(moves: ParsedMove[], color: 'white' | 'black', re
 
 export class ChessJsPgnParserAdapter implements IPgnParserPort {
   parse(pgn: string, playerUsername: string, options?: PgnParserOptions): ParsedGame[] {
-    const rawGames = splitPgn(pgn)
+    const rawGames = splitPgnOptimized(pgn)
     const lc = playerUsername.toLowerCase().trim()
     const since = options?.since
     const limit = options?.limit
     
     const results: ParsedGame[] = []
+    let outOfDateCount = 0
+    const MAX_OUT_OF_DATE_BUFFER = 5 // Allow some wiggle room for non-chronological PGNs
     
     // Process in reverse (most recent first) to satisfy limit early
     for (let i = rawGames.length - 1; i >= 0; i--) {
@@ -92,12 +107,14 @@ export class ChessJsPgnParserAdapter implements IPgnParserPort {
         const dateStr = (headers['Date'] || '').replace(/\./g, '-')
         const gameDate = new Date(dateStr)
         if (!isNaN(gameDate.getTime()) && gameDate < since) {
-          // Since we process in reverse, once we hit a game older than 'since',
-          // we can stop (assuming PGN is roughly chronological).
-          // However, PGNs aren't always perfect, so we might want to continue 
-          // a bit or just rely on the chronological assumption.
-          // For safety, let's just continue for now but skip this game.
+          outOfDateCount++
+          if (outOfDateCount > MAX_OUT_OF_DATE_BUFFER) {
+             // Stop if we consistently see old games
+             break
+          }
           continue 
+        } else {
+          outOfDateCount = 0
         }
       }
       

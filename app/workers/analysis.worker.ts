@@ -243,6 +243,10 @@ async function runAnalysisTask(task: AnalyzeTask): Promise<void> {
       return
     }
 
+    // Mid and Deep can be thought of as progressive enhancement.
+    // We run them sequentially to avoid overloading the engine pool,
+    // but we ensure the UI gets the 'burst' result immediately.
+    
     const mid = await runTier(
       requestId,
       pgn,
