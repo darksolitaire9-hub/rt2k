@@ -22,11 +22,13 @@ const LEAK_DESCRIPTIONS: Record<LeakType, string> = {
   EARLY_RESIGNATION: 'You are resigning in positions that may still have defensive resources.',
 }
 
-export function scoreLeaks(mistakes: MistakeRecord[], trend: TrendReport): Leak[] {
+export function scoreLeaks(mistakes: MistakeRecord[], trend: TrendReport, totalAnalyzedGames?: number): Leak[] {
   const grouped = new Map<LeakType, MistakeRecord[]>()
   
-  // Real game count from mistakes to get a sense of scale
-  const totalAnalyzedGames = [...new Set(mistakes.map(m => m.gameId))].length || 1
+  // Real game count from mistakes to get a sense of scale if not provided
+  const totalGames = (typeof totalAnalyzedGames === 'number')
+    ? totalAnalyzedGames
+    : ([...new Set(mistakes.map(m => m.gameId))].length || 1)
 
   for (const mistake of mistakes) {
     const group = grouped.get(mistake.leakType) ?? []
@@ -39,9 +41,9 @@ export function scoreLeaks(mistakes: MistakeRecord[], trend: TrendReport): Leak[
   for (const [type, group] of grouped) {
     const uniqueGamesInLeak = [...new Set(group.map(m => m.gameId))].length
     
-    // Statistical significance check: at least 5% of games OR MIN_GAMES_FOR_LEAK_PATTERN
-    const density = uniqueGamesInLeak / totalAnalyzedGames
-    if (uniqueGamesInLeak < MIN_GAMES_FOR_LEAK_PATTERN && density < 0.05) continue
+    // Statistical significance check: MUST meet both absolute count AND relative density
+    const density = totalGames > 0 ? uniqueGamesInLeak / totalGames : 0
+    if (uniqueGamesInLeak < MIN_GAMES_FOR_LEAK_PATTERN || density < 0.05) continue
 
     const timeBoost = (type === 'FLAG_RISK' || type === 'PRE_FLAG_BLUNDER') && trend.flagRate > 0.3
       ? 1.5 : 1.0

@@ -36,17 +36,20 @@ describe('scoreLeaks', () => {
   })
 
   it('does not report a leak below the minimum occurrence threshold', () => {
-    const mistakes = Array.from({ length: MIN_GAMES_FOR_LEAK_PATTERN - 1 }, (_, i) =>
+    const count = MIN_GAMES_FOR_LEAK_PATTERN - 1
+    const mistakes = Array.from({ length: count }, (_, i) =>
       makeMistake({ gameId: `g${i}` }),
     )
-    expect(scoreLeaks(mistakes, DEFAULT_TREND)).toHaveLength(0)
+    // Pass count to be explicit, though it would fallback to mistakes count
+    expect(scoreLeaks(mistakes, DEFAULT_TREND, count)).toHaveLength(0)
   })
 
   it('reports a leak when occurrences meet the minimum threshold', () => {
-    const mistakes = Array.from({ length: MIN_GAMES_FOR_LEAK_PATTERN }, (_, i) =>
+    const count = MIN_GAMES_FOR_LEAK_PATTERN
+    const mistakes = Array.from({ length: count }, (_, i) =>
       makeMistake({ gameId: `g${i}` }),
     )
-    const result = scoreLeaks(mistakes, DEFAULT_TREND)
+    const result = scoreLeaks(mistakes, DEFAULT_TREND, count)
     expect(result).toHaveLength(1)
     expect(result[0].type).toBe(LeakType.TacticalMiss)
   })
@@ -58,7 +61,8 @@ describe('scoreLeaks', () => {
         makeMistake({ leakType, gameId: `g${ti}${i}` }),
       ),
     )
-    const result = scoreLeaks(mistakes, DEFAULT_TREND)
+    const totalGames = mistakes.length // Each mistake in unique game
+    const result = scoreLeaks(mistakes, DEFAULT_TREND, totalGames)
     expect(result.length).toBeLessThanOrEqual(MAX_LEAKS_REPORTED)
   })
 
@@ -71,8 +75,8 @@ describe('scoreLeaks', () => {
     const lowFlagTrend: TrendReport = { ...DEFAULT_TREND, flagRate: 0.05 }
     const highFlagTrend: TrendReport = { ...DEFAULT_TREND, flagRate: 0.4 }
 
-    const lowScore = scoreLeaks(mistakes, lowFlagTrend)[0].score
-    const highScore = scoreLeaks(mistakes, highFlagTrend)[0].score
+    const lowScore = scoreLeaks(mistakes, lowFlagTrend, count)[0].score
+    const highScore = scoreLeaks(mistakes, highFlagTrend, count)[0].score
 
     expect(highScore).toBeGreaterThan(lowScore)
   })
@@ -84,8 +88,12 @@ describe('scoreLeaks', () => {
       makeMistake({ gameId: 'g2' }),
     ]
     // Force it to meet threshold for testing
-    const filler = Array.from({ length: MIN_GAMES_FOR_LEAK_PATTERN }, (_, i) => makeMistake({ gameId: `f${i}` }))
-    const result = scoreLeaks([...mistakes, ...filler], DEFAULT_TREND)
+    const fillerCount = MIN_GAMES_FOR_LEAK_PATTERN
+    const filler = Array.from({ length: fillerCount }, (_, i) => makeMistake({ gameId: `f${i}` }))
+    const allMistakes = [...mistakes, ...filler]
+    const totalGames = [...new Set(allMistakes.map(m => m.gameId))].length
+    
+    const result = scoreLeaks(allMistakes, DEFAULT_TREND, totalGames)
     const leak = result[0]
     expect(leak.evidenceGameIds).toContain('g1')
     expect(leak.evidenceGameIds).toContain('g2')
@@ -93,10 +101,11 @@ describe('scoreLeaks', () => {
   })
 
   it('generates a non-empty title and description', () => {
-    const mistakes = Array.from({ length: MIN_GAMES_FOR_LEAK_PATTERN }, (_, i) =>
+    const count = MIN_GAMES_FOR_LEAK_PATTERN
+    const mistakes = Array.from({ length: count }, (_, i) =>
       makeMistake({ gameId: `g${i}` }),
     )
-    const result = scoreLeaks(mistakes, DEFAULT_TREND)
+    const result = scoreLeaks(mistakes, DEFAULT_TREND, count)
     expect(result[0].title.length).toBeGreaterThan(0)
     expect(result[0].description.length).toBeGreaterThan(0)
   })

@@ -141,7 +141,7 @@ export async function analyzePgn(
   onProgress?.({ stage: 'evaluating', current: totalCandidates, total: totalCandidates })
 
   const t3 = performance.now()
-  const leaks = scoreLeaks(confirmed, trendReport)
+  const leaks = scoreLeaks(confirmed, trendReport, games.length)
   const puzzles = buildPuzzles(confirmed)
   const t4 = performance.now()
 
