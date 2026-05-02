@@ -24,11 +24,9 @@ const LEAK_DESCRIPTIONS: Record<LeakType, string> = {
 
 export function scoreLeaks(mistakes: MistakeRecord[], trend: TrendReport): Leak[] {
   const grouped = new Map<LeakType, MistakeRecord[]>()
-  const gameCount = trend.recentWinRate === 0 && trend.flagRate === 0 ? 0 : 50 // Window size fallback
   
-  // Real game count from trend is more accurate if we passed it in, but we'll use trend.flagRate context
-  // Better: identify unique games in mistakes to get a sense of scale
-  const totalAnalyzedGames = [...new Set(mistakes.map(m => m.gameId))].length || 100 // Fallback to 100 if unknown
+  // Real game count from mistakes to get a sense of scale
+  const totalAnalyzedGames = [...new Set(mistakes.map(m => m.gameId))].length || 1
 
   for (const mistake of mistakes) {
     const group = grouped.get(mistake.leakType) ?? []
@@ -41,7 +39,7 @@ export function scoreLeaks(mistakes: MistakeRecord[], trend: TrendReport): Leak[
   for (const [type, group] of grouped) {
     const uniqueGamesInLeak = [...new Set(group.map(m => m.gameId))].length
     
-    // Statistical significance check: at least 5% of games or MIN_GAMES_FOR_LEAK_PATTERN
+    // Statistical significance check: at least 5% of games OR MIN_GAMES_FOR_LEAK_PATTERN
     const density = uniqueGamesInLeak / totalAnalyzedGames
     if (uniqueGamesInLeak < MIN_GAMES_FOR_LEAK_PATTERN && density < 0.05) continue
 

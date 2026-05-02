@@ -12,46 +12,60 @@ const props = defineProps<{
 
 defineEmits<{ train: [leakType: string] }>()
 
-const severityColor = computed(() => {
-  if (props.leak.score <= 40) return 'success'
-  if (props.leak.score <= 70) return 'warning'
-  return 'error'
-})
-
-const severityLabel = computed(() => {
-  if (props.leak.score <= 40) return 'Minor leak'
-  if (props.leak.score <= 70) return 'Moderate leak'
-  return 'Major leak'
+const severityBadge = computed(() => {
+  if (props.leak.score <= 40) return { label: 'Minor', color: 'bg-sage text-forest dark:bg-emerald/10 dark:text-emerald' }
+  if (props.leak.score <= 70) return { label: 'Moderate', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400' }
+  return { label: 'Critical', color: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' }
 })
 </script>
 
 <template>
-  <UCard>
-    <template #header>
-      <div class="flex items-center justify-between gap-2">
-        <h3 class="font-semibold text-base">{{ leak.title }}</h3>
-        <div class="flex items-center gap-1.5 shrink-0">
-          <span class="text-xs text-muted">{{ severityLabel }}</span>
-          <UBadge :color="severityColor" variant="soft">
-            {{ Math.round(leak.score) }}/100
-          </UBadge>
+  <div class="stm-card flex flex-col gap-6" role="article" :aria-labelledby="`leak-title-${leak.type}`">
+    <div class="flex items-start justify-between gap-4">
+      <div class="space-y-1">
+        <span 
+          class="text-[10px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-full"
+          :class="severityBadge.color"
+          role="note"
+        >
+          {{ severityBadge.label }} Severity
+        </span>
+        <h3 :id="`leak-title-${leak.type}`" class="stm-heading text-xl text-charcoal dark:text-white">
+          {{ leak.title }}
+        </h3>
+      </div>
+      <div class="text-right" role="group" aria-label="Leak impact score">
+        <div class="text-2xl font-display font-bold text-forest dark:text-emerald leading-none" aria-live="polite">
+          {{ Math.round(leak.score) }}
+        </div>
+        <div class="text-[10px] uppercase tracking-tighter text-moss dark:text-mint/40 font-bold" aria-hidden="true">
+          Leak Score
         </div>
       </div>
-    </template>
+    </div>
 
-    <div class="space-y-4">
-      <p class="text-sm text-muted leading-relaxed">{{ leak.description }}</p>
+    <p class="text-sm leading-relaxed text-moss dark:text-mint/70 font-medium">
+      {{ leak.description }}
+    </p>
 
-      <ul v-if="leak.evidence.length" class="space-y-1">
-        <li v-for="bullet in leak.evidence" :key="bullet" class="text-xs text-muted flex items-start gap-2">
-          <UIcon name="i-heroicons-check-circle" class="size-3.5 mt-0.5 text-success/70" />
-          {{ bullet }}
+    <div v-if="leak.evidence.length" class="space-y-3">
+      <div class="text-[10px] uppercase tracking-widest font-bold text-moss/60 dark:text-mint/30">
+        Personal Evidence
+      </div>
+      <ul class="space-y-2">
+        <li v-for="bullet in leak.evidence" :key="bullet" class="text-xs flex items-start gap-3 text-charcoal/80 dark:text-white/70">
+          <UIcon name="i-lucide-target" class="size-4 shrink-0 text-forest dark:text-emerald" />
+          <span>{{ bullet }}</span>
         </li>
       </ul>
-
-      <UButton variant="outline" size="sm" block @click="$emit('train', leak.type)">
-        Train this
-      </UButton>
     </div>
-  </UCard>
+
+    <button 
+      class="stm-button-hero mt-auto group"
+      @click="$emit('train', leak.type)"
+    >
+      Fix this leak
+      <UIcon name="i-lucide-arrow-right" class="ml-2 size-5 transition-transform group-hover:translate-x-1" />
+    </button>
+  </div>
 </template>

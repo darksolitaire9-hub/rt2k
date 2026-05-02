@@ -1,5 +1,92 @@
+/* Google Fonts — must come first, before any non-@import CSS is generated */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700&display=swap');
 @import "tailwindcss";
 @import "@nuxt/ui";
 @import "chessground/assets/chessground.base.css";
 @import "chessground/assets/chessground.brown.css";
 @import "chessground/assets/chessground.cburnett.css";
+
+@theme {
+  /* Fonts */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Montserrat", sans-serif;
+
+  /* Color Palette - Light Mode */
+  --color-sand: #FDFCFB;
+  --color-forest: #1B4332;
+  --color-sage: #D8E2DC;
+  --color-charcoal: #1C1C1C;
+  --color-moss: #6B705C;
+
+  /* Color Palette - Dark Mode */
+  --color-midnight: #0B1311;
+  --color-ink: #141D1B;
+  --color-emerald: #40916C;
+  --color-deep-sage: #2D6A4F;
+  --color-mint: #95D5B2;
+
+  /* Semantic Mapping - Primary and Gray for Nuxt UI */
+  --color-primary-50: #F1F8F5;
+  --color-primary-100: #E2F0EA;
+  --color-primary-200: #C5E1D5;
+  --color-primary-300: #A8D2BF;
+  --color-primary-400: #6EB496;
+  --color-primary-500: #1B4332; /* Forest Green */
+  --color-primary-600: #183C2D;
+  --color-primary-700: #143226;
+  --color-primary-800: #10281E;
+  --color-primary-900: #0D2119;
+  --color-primary-950: #0A1A14;
+
+  --color-gray-50: #F9FAFB;
+  --color-gray-100: #F3F4F6;
+  --color-gray-200: #E5E7EB;
+  --color-gray-300: #D1D5DB;
+  --color-gray-400: #9CA3AF;
+  --color-gray-500: #6B7280;
+  --color-gray-600: #4B5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1F2937;
+  --color-gray-900: #111827;
+  --color-gray-950: #030712;
+
+  /* Tactile Details */
+  --radius-stm: 16px;
+  --shadow-stm: 0 10px 40px rgba(27, 67, 50, 0.05);
+  --shadow-stm-dark: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Global Styles */
+body {
+  @apply bg-sand text-charcoal font-sans antialiased;
+}
+
+.dark body {
+  @apply bg-midnight text-white/90;
+}
+
+/* Tailwind preflight resets button cursor — restore pointer globally */
+button:not(:disabled) {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* STM Component Classes */
+.stm-card {
+  @apply bg-white dark:bg-ink rounded-[--radius-stm] shadow-[--shadow-stm] dark:shadow-[--shadow-stm-dark] border border-gray-200 dark:border-forest/20 p-6 transition-all duration-200;
+}
+
+.stm-button-hero {
+  @apply w-full min-h-[56px] bg-forest dark:bg-emerald text-white font-display font-bold uppercase tracking-wider rounded-[--radius-stm] flex items-center justify-center transition-transform active:scale-[0.98] cursor-pointer;
+}
+
+.stm-heading {
+  @apply font-display font-bold leading-[1.1];
+}
+
+/* Chessground Specific STM Theming */
+.cg-wrap {
+  @apply rounded-[--radius-stm] overflow-hidden shadow-lg;
+}

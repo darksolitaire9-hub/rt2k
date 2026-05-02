@@ -165,11 +165,12 @@ describe('ChessJsPgnParserAdapter', () => {
     expect(game.moves[0].timeRemainingSeconds).toBeNull()
   })
 
-  it('parses both games from a multi-game PGN string', () => {
+  it('parses both games from a multi-game PGN string in reverse order (newest first)', () => {
     const result = adapter.parse(WHITE_PGN + '\n\n' + BLACK_PGN, PLAYER)
     expect(result).toHaveLength(2)
-    expect(result[0].record.gameId).toBe('testgame1')
-    expect(result[1].record.gameId).toBe('testgame2')
+    // The parser processes in reverse, and BLACK_PGN is 2024.01.16 while WHITE_PGN is 2024.01.15
+    expect(result[0].record.gameId).toBe('testgame2')
+    expect(result[1].record.gameId).toBe('testgame1')
   })
 
   it('sets timeLoss true when Termination is Time forfeit and player lost', () => {

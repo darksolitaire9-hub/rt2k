@@ -22,15 +22,6 @@ const {
   preAnalyze,
 } = useAnalysis()
 
-const progressMessage = computed(() => {
-  if (!loading.value) return ''
-  const { stage, current, total } = progress.value
-  if (stage === 'parsing') return 'Reading your games...'
-  if (stage === 'detecting') return 'Spotting patterns...'
-  if (stage === 'evaluating') return `Checking positions... ${current}/${total}`
-  return 'Starting up...'
-})
-
 const backgroundMessage = computed(() => {
   if (!backgroundRunning.value) return ''
   const { stage, current, total } = backgroundProgress.value
@@ -39,100 +30,93 @@ const backgroundMessage = computed(() => {
 })
 
 const openingOpen = ref(false)
-
-onMounted(() => {
-  if (typeof PerformanceObserver !== 'undefined') {
-    const observer = new PerformanceObserver((list) => {
-      for (const entry of list.getEntries()) {
-        if (entry.duration > 50) {
-          console.warn(`[MainThread] ⚠️ Long task detected (${Math.round(entry.duration)}ms) - Check if offloading is working!`);
-        }
-      }
-    });
-    observer.observe({ entryTypes: ['longtask'] });
-  }
-})
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto px-4 py-8 space-y-6">
+  <div class="space-y-12 pb-24">
+    <!-- State: Initial Loading -->
+    <AnalysisLoadingScreen
+      v-if="loading && !hasResult"
+      :stage="progress.stage"
+      :current="progress.current"
+      :total="progress.total"
+    />
 
-    <!-- Initial loading spinner -->
-    <div v-if="loading && !hasResult" class="flex flex-col items-center justify-center py-12 space-y-4">
-      <UIcon name="i-heroicons-arrow-path" class="size-8 animate-spin text-primary" />
-      <div class="text-center">
-        <p class="font-medium">{{ progressMessage }}</p>
-        <p class="text-sm text-muted">First puzzles coming right up.</p>
+    <!-- State: Ready to Upload -->
+    <div v-if="!hasResult && !loading" class="space-y-12">
+      <div class="space-y-4 text-center">
+        <h1 class="stm-heading text-4xl text-charcoal dark:text-white">
+          Analyze your form
+        </h1>
+        <p class="text-moss dark:text-mint/60 max-w-sm mx-auto font-medium">
+          Upload your PGN and let's see what's holding you back from 2000.
+        </p>
       </div>
+      
+      <PgnUploadCard
+        :loading="loading"
+        @analyze="analyze"
+        @pre-load="preLoad"
+        @pre-analyze="(pgn, u, days) => preAnalyze(pgn, u, days)"
+      />
     </div>
 
-    <PgnUploadCard
-      v-if="!hasResult && !loading"
-      :loading="loading"
-      @analyze="analyze"
-      @pre-load="preLoad"
-      @pre-analyze="(pgn, u, days) => preAnalyze(pgn, u, days)"
-    />
+    <!-- State: Error -->
+    <div v-if="error" class="stm-card border-red-200 dark:border-red-900/30 bg-red-50 dark:bg-red-900/10 space-y-4">
+      <div class="flex items-center gap-3 text-red-600 dark:text-red-400 font-bold uppercase tracking-widest text-xs">
+        <UIcon name="i-lucide-alert-circle" class="size-5" />
+        Analysis Failed
+      </div>
+      <p class="text-red-800 dark:text-red-200 font-medium">{{ error }}</p>
+      <button class="stm-button-hero bg-red-600 dark:bg-red-500" @click="hasResult = false">
+        Try again
+      </button>
+    </div>
 
-    <UAlert
-      v-if="error"
-      color="error"
-      variant="soft"
-      :title="error"
-      class="cursor-pointer"
-      @click="hasResult = false"
-    >
-      <template #description>Click to try again with a different file.</template>
-    </UAlert>
-
-    <UAlert
-      v-if="hasResult && isPartial"
-      color="warning"
-      variant="soft"
-      title="Partial analysis"
-      description="Results are based on the most recent games in the window — some were skipped due to size limits."
-    />
-
+    <!-- State: Results -->
     <template v-if="hasResult">
-
-      <!-- Header row -->
-      <div class="flex items-center justify-between">
-        <h1 class="text-xl font-bold">Your results</h1>
-        <UButton
-          variant="ghost"
-          color="neutral"
-          size="sm"
-          icon="i-heroicons-arrow-path"
-          @click="hasResult = false"
-        >
-          New analysis
-        </UButton>
-      </div>
-
-      <!-- Background analysis banner -->
-      <div
-        v-if="backgroundRunning"
-        class="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/20 text-sm text-primary"
-      >
-        <UIcon name="i-heroicons-arrow-path" class="size-4 animate-spin shrink-0" />
-        <span>{{ backgroundMessage }}</span>
-      </div>
-
-      <!-- Puzzle CTA -->
-      <UCard v-if="puzzleCount > 0">
-        <div class="flex items-center justify-between gap-4">
-          <div>
-            <p class="font-semibold text-base">
-              {{ puzzleCount }} puzzle{{ puzzleCount !== 1 ? 's' : '' }} ready
-              <span v-if="backgroundRunning" class="text-xs font-normal text-muted ml-1">(more coming)</span>
-            </p>
-            <p class="text-sm text-muted">Positions taken directly from your games</p>
-          </div>
-          <UButton size="sm" class="cursor-pointer shrink-0" @click="navigateTo('/puzzles')">
-            Train now
-          </UButton>
+      <div class="space-y-4 text-center">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sage/30 dark:bg-emerald/10 text-forest dark:text-emerald text-[10px] uppercase font-bold tracking-widest">
+          <div v-if="backgroundRunning" class="size-1.5 rounded-full bg-forest dark:bg-emerald animate-ping" />
+          {{ backgroundRunning ? 'Live Analysis' : 'Analysis Complete' }}
         </div>
-      </UCard>
+        <h1 class="stm-heading text-4xl text-charcoal dark:text-white">
+          Your Report
+        </h1>
+      </div>
+
+      <!-- Background progress message -->
+      <div v-if="backgroundRunning && backgroundMessage" class="flex items-center gap-2 text-xs font-medium text-moss dark:text-mint/50">
+        <div class="size-1.5 rounded-full bg-forest dark:bg-emerald animate-ping shrink-0" />
+        {{ backgroundMessage }}
+      </div>
+
+      <!-- Partial analysis notice -->
+      <div v-if="isPartial" class="flex items-center gap-3 px-4 py-3 rounded-[--radius-stm] bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30">
+        <UIcon name="i-lucide-clock" class="size-4 text-amber-500 shrink-0" />
+        <p class="text-xs font-medium text-amber-800 dark:text-amber-200">Partial analysis — some positions weren't evaluated due to missing clock data.</p>
+      </div>
+
+      <!-- Puzzle Hero CTA -->
+      <div v-if="puzzleCount > 0" class="stm-card bg-forest dark:bg-emerald text-white border-0 space-y-6">
+        <div class="flex items-start justify-between">
+          <div class="space-y-1">
+            <h2 class="stm-heading text-3xl">
+              {{ puzzleCount }} Puzzles
+            </h2>
+            <p class="text-white/70 font-medium text-sm">
+              Custom-built from your actual mistakes.
+            </p>
+          </div>
+          <UIcon name="i-lucide-sparkles" class="size-10 text-white/30" />
+        </div>
+        <button 
+          class="w-full min-h-[56px] bg-white text-forest dark:text-emerald font-display font-bold uppercase tracking-wider rounded-[--radius-stm] flex items-center justify-center transition-transform active:scale-[0.98]"
+          @click="navigateTo('/puzzles')"
+        >
+          Train now
+        </button>
+      </div>
 
       <AnalysisSummaryCard
         :total-games="totalGames"
@@ -144,67 +128,96 @@ onMounted(() => {
         :rating-range="ratingRange"
       />
 
-      <section v-if="leaks.length" class="space-y-4">
-        <h2 class="text-lg font-semibold">Your top leaks</h2>
-        <LeakCard
-          v-for="leak in leaks.slice(0, 3)"
-          :key="leak.type"
-          :leak="leak"
-          @train="(type) => navigateTo({ path: '/puzzles', query: { type } })"
-        />
+      <!-- Leaks Section -->
+      <section v-if="leaks.length" class="space-y-6">
+        <div class="flex items-center justify-between">
+          <h2 class="stm-heading text-2xl text-charcoal dark:text-white">Top Leaks</h2>
+          <span class="text-[10px] uppercase font-bold tracking-widest text-moss/40">Sorted by impact</span>
+        </div>
+        
+        <div class="space-y-4">
+          <LeakCard
+            v-for="leak in leaks.slice(0, 3)"
+            :key="leak.type"
+            :leak="leak"
+            @train="(type) => navigateTo({ path: '/puzzles', query: { type } })"
+          />
+        </div>
       </section>
 
-      <div v-else class="space-y-4">
-        <UAlert
-          color="success"
-          variant="soft"
-          title="No significant leaks detected"
-          description="No major patterns found in these games. Great job!"
-        />
-        <UButton block variant="outline" @click="hasResult = false">
-          Upload more games
-        </UButton>
+      <!-- Opening Breakdown (Effortless UI) -->
+      <div v-if="openingStats.length" class="stm-card p-0 overflow-hidden">
+        <button
+          class="w-full flex items-center justify-between p-6 text-left"
+          @click="openingOpen = !openingOpen"
+          aria-expanded="openingOpen"
+        >
+          <div class="space-y-1">
+            <h2 class="stm-heading text-xl text-charcoal dark:text-white">Opening Performance</h2>
+            <p class="text-xs font-medium text-moss dark:text-mint/40">Where you're losing the game early</p>
+          </div>
+          <UIcon
+            :name="openingOpen ? 'i-lucide-minus' : 'i-lucide-plus'"
+            class="size-6 text-forest dark:text-emerald"
+          />
+        </button>
+
+        <div v-if="openingOpen" class="px-6 pb-6 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div 
+            v-for="row in openingStats.slice(0, 8)" 
+            :key="row.name"
+            class="space-y-3 pb-6 border-b border-gray-50 dark:border-forest/5 last:border-0 last:pb-0"
+          >
+            <!-- Header: Name + Verdict -->
+            <div class="flex items-start justify-between gap-4">
+              <div class="space-y-0.5 min-w-0">
+                <div class="text-sm font-bold text-charcoal dark:text-white truncate" :title="row.name">{{ row.name }}</div>
+                <div class="text-[10px] uppercase font-bold text-moss/50 tracking-wider">{{ row.games }} games played</div>
+              </div>
+              <div 
+                class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest shrink-0"
+                :class="row.winRate <= 35 ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400' : row.winRate >= 55 ? 'bg-forest/10 text-forest dark:bg-emerald/10 dark:text-emerald' : 'bg-gray-100 text-moss dark:bg-white/5 dark:text-mint/50'"
+              >
+                {{ row.winRate <= 35 ? 'Critical Leak' : row.winRate >= 55 ? 'Main Weapon' : 'Developing' }}
+              </div>
+            </div>
+
+            <!-- Visual Bar: Win / Draw / Loss -->
+            <div class="space-y-1.5">
+              <div class="h-2 w-full flex rounded-full overflow-hidden bg-gray-100 dark:bg-white/5">
+                <div 
+                  class="h-full bg-forest dark:bg-emerald transition-all duration-1000" 
+                  :style="{ width: `${row.winRate}%` }" 
+                  :title="`Wins: ${row.winRate}%`"
+                />
+                <!-- Simplified for now: assuming 5% draws if data not split, or just showing win vs not-win -->
+                <div 
+                  class="h-full bg-red-500 dark:bg-red-400 opacity-80 transition-all duration-1000" 
+                  :style="{ width: `${100 - row.winRate}%` }" 
+                  :title="`Losses/Draws: ${100 - row.winRate}%`"
+                />
+              </div>
+              <div class="flex justify-between text-[10px] font-bold uppercase tracking-tighter text-moss/40 dark:text-mint/20">
+                <span>Wins: {{ row.winRate }}%</span>
+                <span>Losses/Draws: {{ 100 - row.winRate }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <UCard v-if="openingStats.length">
-        <template #header>
-          <button
-            class="flex items-center justify-between w-full text-left"
-            :aria-expanded="openingOpen"
-            @click="openingOpen = !openingOpen"
-          >
-            <h2 class="text-lg font-semibold">Opening breakdown</h2>
-            <UIcon
-              :name="openingOpen ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'"
-              class="size-4 text-muted"
-            />
-          </button>
-        </template>
-
-        <div v-if="openingOpen" class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="text-left text-muted border-b border-default">
-                <th class="pb-2 font-medium">Opening</th>
-                <th class="pb-2 font-medium text-right">Games</th>
-                <th class="pb-2 font-medium text-right">Win %</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="row in openingStats"
-                :key="row.name"
-                class="border-b border-default last:border-0"
-                :class="row.winRate <= 33 ? 'text-error' : ''"
-              >
-                <td class="py-1.5 pr-4 truncate max-w-[180px]">{{ row.name }}</td>
-                <td class="py-1.5 text-right">{{ row.games }}</td>
-                <td class="py-1.5 text-right">{{ row.winRate }}%</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </UCard>
+      <!-- Footer Action -->
+      <div class="pt-8 space-y-4">
+        <button 
+          class="stm-button-hero bg-sage dark:bg-deep-sage text-forest dark:text-white"
+          @click="hasResult = false"
+        >
+          New Analysis
+        </button>
+        <p class="text-center text-[10px] uppercase font-bold tracking-widest text-moss/40">
+          Road to 2000 — Keep Grinding
+        </p>
+      </div>
 
     </template>
   </div>

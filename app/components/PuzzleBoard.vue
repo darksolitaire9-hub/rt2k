@@ -84,20 +84,35 @@ watch(() => props.puzzle.id, () => initBoard())
   <div class="space-y-4">
     <div ref="boardEl" class="w-full aspect-square" />
 
-    <p class="text-center text-sm font-medium min-h-5" aria-live="polite">
-      <span v-if="feedback === 'correct'" class="text-green-600">Correct!</span>
-      <span v-else-if="feedback === 'wrong'" class="text-red-500">Try again</span>
-      <span v-else-if="feedback === 'revealed'" class="text-gray-400">Solution shown</span>
-      <span v-else class="text-gray-400 capitalize">{{ sideToMove(puzzle.fen) }} to move</span>
+    <p class="text-center text-sm font-bold uppercase tracking-wide min-h-5" aria-live="polite">
+      <span v-if="feedback === 'correct'" class="text-forest dark:text-emerald">Correct!</span>
+      <span v-else-if="feedback === 'wrong'" class="text-red-500 dark:text-red-400">Try again</span>
+      <span v-else-if="feedback === 'revealed'" class="text-moss dark:text-mint/50">Solution shown</span>
+      <span v-else class="text-moss/50 dark:text-mint/30 capitalize">{{ sideToMove(puzzle.fen) }} to move</span>
     </p>
 
     <div class="grid grid-cols-3 gap-2">
-      <UButton variant="outline" size="sm" @click="reset">Reset</UButton>
-      <UButton variant="outline" size="sm" @click="showHint">Hint</UButton>
-      <UButton variant="outline" size="sm" @click="showSolution">Solution</UButton>
+      <button
+        class="min-h-[44px] rounded-[--radius-stm] border-2 border-gray-200 dark:border-forest/30 text-xs font-bold uppercase tracking-wide text-charcoal dark:text-white/70 hover:border-forest dark:hover:border-emerald transition-colors"
+        @click="reset"
+      >
+        Reset
+      </button>
+      <button
+        class="min-h-[44px] rounded-[--radius-stm] border-2 border-gray-200 dark:border-forest/30 text-xs font-bold uppercase tracking-wide text-charcoal dark:text-white/70 hover:border-forest dark:hover:border-emerald transition-colors"
+        @click="showHint"
+      >
+        Hint
+      </button>
+      <button
+        class="min-h-[44px] rounded-[--radius-stm] border-2 border-gray-200 dark:border-forest/30 text-xs font-bold uppercase tracking-wide text-charcoal dark:text-white/70 hover:border-forest dark:hover:border-emerald transition-colors"
+        @click="showSolution"
+      >
+        Solution
+      </button>
     </div>
 
-    <p class="text-xs text-gray-400 text-center">
+    <p class="text-[10px] text-moss/40 dark:text-mint/20 text-center uppercase tracking-wider">
       Move {{ puzzle.sourceMoveNumber }} · game {{ puzzle.sourceGameId.slice(-6) }}
     </p>
   </div>

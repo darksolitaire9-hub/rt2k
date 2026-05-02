@@ -9,6 +9,7 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
+    "@iconify-json/lucide": "^1.2.105",
     "typescript": "^5.4.0",
     "vitest": "^2.0.0"
   },

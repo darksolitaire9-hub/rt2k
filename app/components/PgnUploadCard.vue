@@ -131,125 +131,135 @@ function submit() {
 </script>
 
 <template>
-  <UCard>
-    <template #header>
-      <h2 class="text-lg font-semibold">Upload your games</h2>
-    </template>
+  <div class="stm-card space-y-6">
+    <div class="space-y-1">
+      <h2 class="stm-heading text-2xl text-charcoal dark:text-white">Upload your games</h2>
+      <p class="text-sm font-medium text-moss dark:text-mint/50">Drop a PGN file to find your leaks</p>
+    </div>
 
     <div class="space-y-4">
+      <!-- Drop zone -->
       <div
         v-if="!fileName || fileError"
         role="button"
         aria-label="Drop zone: drag and drop a PGN file here or click Choose file"
-        class="border-2 border-dashed rounded-lg p-8 text-center transition-colors"
-        :class="isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 dark:border-gray-700'"
+        class="border-2 border-dashed rounded-[--radius-stm] p-10 text-center transition-colors"
+        :class="isDragging ? 'border-forest dark:border-emerald bg-sage/20 dark:bg-emerald/5' : 'border-gray-300 dark:border-forest/30'"
         @dragover.prevent="isDragging = true"
         @dragleave.prevent="isDragging = false"
         @drop.prevent="onDrop"
       >
-        <input
-          id="pgn-file"
-          type="file"
-          accept=".pgn"
-          class="sr-only"
-          @change="onFileInput"
-        />
-        <label for="pgn-file" class="cursor-pointer select-none">
-          <UIcon name="i-heroicons-cloud-arrow-up" class="size-8 text-gray-400 mb-2" />
-          <p class="text-sm text-gray-500 dark:text-gray-400">
-            Drop a <span class="font-medium">.pgn</span> file here, or
-            <span class="text-primary font-medium">choose file</span>
-          </p>
+        <input id="pgn-file" type="file" accept=".pgn" class="sr-only" @change="onFileInput" />
+        <label for="pgn-file" class="cursor-pointer select-none flex flex-col items-center gap-3">
+          <UIcon name="i-lucide-upload-cloud" class="size-10 text-forest/30 dark:text-emerald/30" />
+          <div class="space-y-1">
+            <p class="text-sm font-bold text-charcoal dark:text-white/80">
+              Drop a <span class="text-forest dark:text-emerald">.pgn</span> file here
+            </p>
+            <p class="text-xs text-moss dark:text-mint/40">
+              or <span class="text-forest dark:text-emerald font-semibold underline underline-offset-2">choose file</span>
+            </p>
+          </div>
         </label>
       </div>
 
+      <!-- Reading progress -->
       <div v-if="isReading" class="space-y-2">
-        <div class="flex justify-between text-xs text-muted">
+        <div class="flex justify-between text-xs font-medium text-moss dark:text-mint/50">
           <span>Reading file...</span>
           <span>{{ readProgress }}%</span>
         </div>
         <UProgress :value="readProgress" size="sm" />
       </div>
 
-      <UAlert v-if="fileError" color="error" variant="soft" :title="fileError" />
+      <!-- File error -->
+      <div v-if="fileError" class="flex items-center gap-3 p-4 rounded-[--radius-stm] bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30">
+        <UIcon name="i-lucide-alert-circle" class="size-5 text-red-500 shrink-0" />
+        <p class="text-sm font-medium text-red-700 dark:text-red-300">{{ fileError }}</p>
+      </div>
 
+      <!-- File loaded + form -->
       <template v-if="fileName && !isReading && !fileError">
-        <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-900 p-3 rounded-md">
+        <!-- File chip -->
+        <div class="flex items-center justify-between bg-sage/30 dark:bg-forest/10 p-3 rounded-[--radius-stm]">
           <div class="flex items-center gap-2 min-w-0">
-            <UIcon name="i-heroicons-document-text" class="size-5 text-primary shrink-0" />
-            <p class="text-sm font-medium truncate">{{ fileName }}</p>
+            <UIcon name="i-lucide-file-text" class="size-5 text-forest dark:text-emerald shrink-0" />
+            <p class="text-sm font-bold text-charcoal dark:text-white truncate">{{ fileName }}</p>
           </div>
-          <UButton
-            variant="ghost"
-            color="neutral"
-            icon="i-heroicons-x-mark"
-            size="xs"
+          <button
+            class="p-1.5 rounded-full hover:bg-sage dark:hover:bg-forest/20 transition-colors"
+            aria-label="Remove file"
             @click="fileName = ''; pgn = ''; fileError = ''; detectedNames = []; playerUsername = ''"
-          />
+          >
+            <UIcon name="i-lucide-x" class="size-4 text-moss dark:text-mint/60" />
+          </button>
         </div>
 
-        <div class="space-y-4 pt-2">
-          <!-- Username input with auto-detect suggestions -->
+        <div class="space-y-5">
+          <!-- Username -->
           <div class="space-y-2">
             <UInput
               v-model="playerUsername"
               placeholder="Your username in the PGN"
-              icon="i-heroicons-user"
+              icon="i-lucide-user"
               size="md"
               autofocus
               @keyup.enter="submit"
             />
-            <div v-if="detectedNames.length > 1" class="flex flex-wrap gap-2">
-              <p class="text-xs text-muted self-center">Detected:</p>
-              <UButton
+            <div v-if="detectedNames.length > 1" class="flex flex-wrap gap-2 items-center">
+              <p class="text-xs font-medium text-moss dark:text-mint/40">Detected:</p>
+              <button
                 v-for="name in detectedNames"
                 :key="name"
-                size="xs"
-                :variant="playerUsername === name ? 'solid' : 'outline'"
-                color="neutral"
-                class="cursor-pointer"
+                class="px-3 py-1 text-xs font-bold rounded-full transition-colors"
+                :class="playerUsername === name
+                  ? 'bg-forest dark:bg-emerald text-white'
+                  : 'bg-sage/30 dark:bg-forest/20 text-charcoal dark:text-white/70 border border-gray-200 dark:border-forest/30'"
                 @click="playerUsername = name"
               >
                 {{ name }}
-              </UButton>
+              </button>
             </div>
           </div>
 
-          <div class="flex flex-col gap-2">
-            <p class="px-1 text-xs font-medium text-muted">How far back?</p>
+          <!-- Range selector -->
+          <div class="space-y-2">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-moss dark:text-mint/50">How far back?</p>
             <div class="flex gap-2">
-              <UButton
+              <button
                 v-for="r in ranges"
                 :key="r.value"
-                :variant="selectedRange === r.value ? 'solid' : 'ghost'"
-                color="neutral"
-                size="xs"
-                class="flex-1 justify-center cursor-pointer"
+                class="flex-1 py-2 text-xs font-bold rounded-[--radius-stm] transition-colors"
+                :class="selectedRange === r.value
+                  ? 'bg-forest dark:bg-emerald text-white'
+                  : 'bg-sage/20 dark:bg-forest/10 text-charcoal dark:text-white/70 border border-gray-200 dark:border-forest/20'"
                 @click="selectedRange = r.value"
               >
                 {{ r.label }}
-              </UButton>
+              </button>
             </div>
-            <p class="px-1 text-[11px] text-muted leading-tight transition-all">{{ selectedRangeHint }}</p>
+            <p class="text-[11px] text-moss dark:text-mint/40 leading-tight transition-all">{{ selectedRangeHint }}</p>
           </div>
 
-          <UButton
+          <!-- Submit -->
+          <button
             v-if="playerUsername.trim()"
-            block
-            size="xl"
-            class="cursor-pointer font-bold"
-            :loading="loading"
-            :disabled="!pgn"
+            class="stm-button-hero"
+            :disabled="!pgn || loading"
             @click="submit"
           >
-            {{ loading ? 'Getting your puzzles...' : 'Find my weaknesses' }}
-          </UButton>
+            <span v-if="loading" class="flex items-center gap-2">
+              <UIcon name="i-lucide-loader-2" class="size-5 animate-spin" />
+              Getting your puzzles...
+            </span>
+            <span v-else>Find my weaknesses</span>
+          </button>
         </div>
       </template>
 
-      <p class="text-[10px] text-gray-400 text-center uppercase tracking-wider">
+      <p class="text-[10px] text-moss/40 dark:text-mint/20 text-center uppercase tracking-wider">
         Browser-only · Private · Local Analysis
       </p>
     </div>
-  </UCard>
+  </div>
 </template>

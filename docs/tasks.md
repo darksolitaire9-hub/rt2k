@@ -66,6 +66,7 @@
 - [x] Auto-detect player username from PGN headers in PgnUploadCard
 - [x] Add backgroundRunning state + progress to useAnalysis
 - [x] Background analysis indicator and puzzle count on analyze page
+- [x] Align AI instructions and documentation with refined project guidelines
 
 ## Phase 9 — Persistence
 - [ ] Set up Supabase Auth (required before AC6)

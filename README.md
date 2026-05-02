@@ -2,16 +2,15 @@
 
 I’m trying to get to 2000 in chess, and I hit a wall.
 
-Most puzzle sites are great, but they’re not really *about me* — they’re not tuned to my mistakes, my time trouble, or the specific patterns I keep blundering. rt2k is my attempt to fix that.
+Most puzzle sites are great, but they’re not really about me — they’re not tuned to my mistakes, my time trouble, or the specific patterns I keep blundering. rt2k is my attempt to fix that.
 
 This project is a personal training ground that:
+
 - Analyzes my own games with Stockfish
 - Turns my recurring mistakes into tailored puzzles
 - Experiments with different LLMs to generate guidance and explanations
 
 It started as “I have a problem in my chess” and turned into “what if I just built the tool I wish existed?”
-
----
 
 ## What rt2k does
 
@@ -22,9 +21,7 @@ rt2k focuses on **personalized chess improvement** rather than generic puzzles:
 - Generates training positions and exercises based on those mistakes
 - Uses different LLMs to explain ideas, suggest plans, and act like a lightweight coach
 
-The goal is not to be another big chess site, but a small tool that is brutally focused on *my* weaknesses and my road to 2000.
-
----
+The goal is not to be another big chess site, but a small tool that is brutally focused on my weaknesses and my road to 2000.
 
 ## Tech at a glance
 
@@ -39,8 +36,6 @@ Under the hood, rt2k is built as a modern web app:
 
 Most analysis currently runs locally in the browser, with a planned Supabase backend guided by the docs in `./docs`.
 
----
-
 ## Getting started (local dev)
 
 > Note: This is a personal project in active development. Things may change.
@@ -54,10 +49,10 @@ Most analysis currently runs locally in the browser, with a planned Supabase bac
 
 2. **Install dependencies**
 
-   Use your preferred package manager (example with pnpm):
+   Use your preferred package manager (example with npm):
 
    ```bash
-   pnpm install
+   npm install
    ```
 
 3. **Environment variables**
@@ -68,12 +63,10 @@ Most analysis currently runs locally in the browser, with a planned Supabase bac
 4. **Run the dev server**
 
    ```bash
-   pnpm dev
+   npm run dev
    ```
 
 5. Open the app in your browser at the URL printed in the terminal.
-
----
 
 ## Architecture
 
@@ -89,8 +82,6 @@ The idea is to keep the chess and analysis brain independent from the UI, so the
 
 For more detail, check the files under `./docs` (plan, data-model, decisions, etc.).
 
----
-
 ## AI collaborators
 
 rt2k is built by me, with a lot of help from modern tooling:
@@ -100,8 +91,6 @@ rt2k is built by me, with a lot of help from modern tooling:
 - **Stockfish 18** – the actual engine doing the heavy chess evaluation
 
 I try to keep the repo honest about AI assistance so it can also serve as a small case study in human + AI collaboration. The goal is not to hide the AI but to show how it fits into a real project aimed at a concrete goal: reaching 2000.
-
----
 
 ## Security & privacy
 
@@ -113,8 +102,6 @@ This is an early-stage personal project, so the security posture is evolving. Cu
 - Gradually adding documentation in `SECURITY.md` and `docs/security-rules.md`
 
 If you notice a security issue or a risky pattern, please open an issue or contact me privately. I appreciate responsible disclosure.
-
----
 
 ## Status & contributions
 
@@ -128,8 +115,6 @@ Contributions, suggestions, and issues are welcome, especially around:
 
 If you send a PR, please keep it small and focused, and feel free to mention if you used an LLM (Gemini, Claude, etc.) to help write it.
 
----
-
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [MIT License](./LICENSE).

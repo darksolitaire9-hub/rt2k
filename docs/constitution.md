@@ -13,16 +13,16 @@ and prescribing personalized puzzles grounded in their own mistakes.
 - Spec-first: implementation follows written specs, plans, and task lists.
 
 ## AI tooling
-- Claude Code is the primary AI coding assistant.
-- All Claude interactions follow the SDD workflow: spec confirmed before code written.
-- One task per branch. Claude works only on the current unchecked task in docs/tasks.md.
+- Gemini CLI and Claude Code are the primary AI coding assistants.
+- All AI interactions follow the SDD workflow: spec confirmed before code written.
+- One task per branch. AI works only on the current unchecked task in docs/tasks.md.
 
 ## SDD workflow order
-1. Constitution → defines mission, principles, constraints
-2. Requirements → defines user stories and acceptance criteria
-3. Plan → defines phases and code organization
-4. Tasks → defines atomic work items per phase
-5. Code → only after the above are in place
+1. Constitution — defines mission, principles, constraints
+2. Requirements — defines user stories and acceptance criteria
+3. Plan — defines phases and code organization
+4. Tasks — defines atomic work items per phase
+5. Code — only after the above are in place
 
 ## Architecture
 - Frontend: Nuxt 4 with app/ directory.
