@@ -13,26 +13,46 @@ export interface SupabaseClientLike {
   }
 }
 
-function toRunRow(run: AnalysisRun, userId: string | null): Record<string, unknown> {
+function toAnalysesRow(run: AnalysisRun, games: GameRecord[], leaks: Leak[], userId: string | null): Record<string, unknown> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { id, gamesCount, createdAt, ...summary } = run
   return {
     id: run.id,
-    source_type: run.sourceType,
-    games_count: run.gamesCount,
-    created_at: run.createdAt,
     user_id: userId,
-    is_partial: run.isPartial,
-    trend_report: run.trendReport,
+    created_at: run.createdAt,
+    game_count: run.gamesCount,
+    summary,
+    games,
+    leaks,
   }
 }
 
-function fromRunRow(row: Record<string, unknown>): AnalysisRun {
+function fromAnalysesRow(row: Record<string, unknown>): AnalysisRun {
+  const summary = (row['summary'] as Record<string, unknown>) || {}
   return {
     id: row['id'] as string,
-    sourceType: row['source_type'] as AnalysisRun['sourceType'],
-    gamesCount: row['games_count'] as number,
+    sourceType: summary['sourceType'] as AnalysisRun['sourceType'],
+    gamesCount: row['game_count'] as number,
     createdAt: row['created_at'] as string,
-    isPartial: (row['is_partial'] as boolean) ?? false,
-    trendReport: (row['trend_report'] as AnalysisRun['trendReport']) ?? null,
+    isPartial: (summary['isPartial'] as boolean) ?? false,
+    trendReport: (summary['trendReport'] as AnalysisRun['trendReport']) ?? null,
+  }
+}
+
+function toPuzzleRow(p: UserPuzzle, userId: string | null): Record<string, unknown> {
+  return {
+    id: p.id,
+    user_id: userId,
+    source_game_id: p.sourceGameId,
+    source_move_number: p.sourceMoveNumber,
+    fen: p.fen,
+    best_move: p.solution,
+    played_move: 'unknown', // Placeholder as UserPuzzle doesn't have it yet
+    leak_type: p.leakType,
+    // Optional fields
+    theme: null,
+    rating_hint: null,
+    solved: false,
   }
 }
 
@@ -43,26 +63,12 @@ export class SupabaseAnalysisRepositoryAdapter implements IAnalysisRepositoryPor
     const { data: authData } = await this.db.auth.getUser()
     const userId = authData?.user?.id ?? null
 
-    const { error: runError } = await this.db.from('analysis_runs').insert([toRunRow(run, userId)])
+    const { error: runError } = await this.db.from('analyses').insert([toAnalysesRow(run, games, leaks, userId)])
     if (runError) throw new Error(runError.message)
 
-    if (games.length > 0) {
-      const { error } = await this.db.from('game_records').insert(
-        games.map(g => ({ ...g, run_id: run.id, user_id: userId })),
-      )
-      if (error) throw new Error(error.message)
-    }
-
-    if (leaks.length > 0) {
-      const { error } = await this.db.from('leaks').insert(
-        leaks.map(l => ({ ...l, run_id: run.id, user_id: userId })),
-      )
-      if (error) throw new Error(error.message)
-    }
-
     if (puzzles.length > 0) {
-      const { error } = await this.db.from('user_puzzles').insert(
-        puzzles.map(p => ({ ...p, run_id: run.id, user_id: userId })),
+      const { error } = await this.db.from('puzzles').insert(
+        puzzles.map(p => toPuzzleRow(p, userId)),
       )
       if (error) throw new Error(error.message)
     }
@@ -70,20 +76,20 @@ export class SupabaseAnalysisRepositoryAdapter implements IAnalysisRepositoryPor
 
   async findById(id: string): Promise<AnalysisRun | null> {
     const { data, error } = await this.db
-      .from('analysis_runs')
+      .from('analyses')
       .select('*')
       .eq('id', id)
       .single()
     if (error || !data) return null
-    return fromRunRow(data as Record<string, unknown>)
+    return fromAnalysesRow(data as Record<string, unknown>)
   }
 
   async listByUser(userId: string): Promise<AnalysisRun[]> {
     const { data, error } = await this.db
-      .from('analysis_runs')
+      .from('analyses')
       .select('*')
       .eq('user_id', userId)
     if (error || !data) return []
-    return (data as Record<string, unknown>[]).map(fromRunRow)
+    return (data as Record<string, unknown>[]).map(fromAnalysesRow)
   }
 }

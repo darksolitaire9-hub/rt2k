@@ -1,6 +1,9 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-01-01',
-  modules: ['@nuxt/ui'],
+  modules: ['@nuxt/ui', '@nuxtjs/supabase'],
+  supabase: {
+    redirect: false
+  },
   css: ['~/assets/css/main.css'],
   app: {
     head: {

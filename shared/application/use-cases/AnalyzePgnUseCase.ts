@@ -10,6 +10,7 @@ import type { Leak } from '../../domain/entities/Leak'
 import type { UserPuzzle } from '../../domain/entities/UserPuzzle'
 import type { MistakeRecord } from '../../domain/entities/MistakeRecord'
 import type { TrendReport } from '../../domain/entities/TrendReport'
+import type { AnalysisRun } from '../../domain/entities/AnalysisRun'
 import { LeakType } from '../../domain/value-objects/LeakType'
 import {
   ENGINE_SEARCH_DEPTH_DEEP,
@@ -27,13 +28,11 @@ import {
 export { BURST_GAME_LIMIT, MID_GAME_LIMIT, MAX_GAMES_PER_ANALYSIS_RUN }
 
 export interface AnalysisResult {
+  run: AnalysisRun
   games: GameRecord[]
   mistakes: MistakeRecord[]
   leaks: Leak[]
   puzzles: UserPuzzle[]
-  isPartial: boolean
-  trendReport: TrendReport
-  totalGamesInWindow: number
 }
 
 export type ProgressCallback = (data: { stage: 'parsing' | 'detecting' | 'evaluating'; current: number; total: number }) => void
@@ -57,6 +56,8 @@ export async function analyzePgn(
   playerUsername: string,
   parser: IPgnParserPort,
   engine: EngineEvaluatorPort,
+  id: string,
+  sourceType: 'pgn-upload' | 'lichess-import' = 'pgn-upload',
   days: number = 90,
   onProgress?: ProgressCallback,
   gameLimit: number = MAX_GAMES_PER_ANALYSIS_RUN,
@@ -152,5 +153,14 @@ export async function analyzePgn(
     - Evaluating: ${(tEval1 - tEval0).toFixed(1)}ms (Positions: ${evalRequests.length})
     - Post-processing: ${(t4 - t3).toFixed(1)}ms`)
 
-  return { games, mistakes: confirmed, leaks, puzzles, isPartial, trendReport, totalGamesInWindow: totalInWindow }
+  const run: AnalysisRun = {
+    id,
+    sourceType,
+    gamesCount: totalInWindow,
+    createdAt: new Date().toISOString(),
+    isPartial,
+    trendReport,
+  }
+
+  return { run, games, mistakes: confirmed, leaks, puzzles }
 }

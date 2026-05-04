@@ -10,15 +10,15 @@ import { LeakType } from '../../../shared/domain/value-objects/LeakType'
 
 function makeMockDb(options: {
   userId?: string
-  findRunResult?: Record<string, unknown> | null
-  listRunsResult?: Record<string, unknown>[]
+  findResult?: Record<string, unknown> | null
+  listResults?: Record<string, unknown>[]
   insertError?: string
 } = {}): SupabaseClientLike & { inserted: Record<string, unknown[]> } {
   const inserted: Record<string, unknown[]> = {}
   const {
     userId = 'user-123',
-    findRunResult = null,
-    listRunsResult = [],
+    findResult = null,
+    listResults = [],
     insertError,
   } = options
 
@@ -41,10 +41,10 @@ function makeMockDb(options: {
             eq(_col: string, _val: string) {
               return {
                 async single() {
-                  return { data: findRunResult, error: null }
+                  return { data: findResult, error: null }
                 },
                 then(resolve: (v: unknown) => void) {
-                  resolve({ data: listRunsResult, error: null })
+                  resolve({ data: listResults, error: null })
                 },
               }
             },
@@ -79,62 +79,81 @@ const LEAK: Leak = {
 
 const PUZZLE: UserPuzzle = {
   id: 'p1', sourceGameId: 'g1', sourceMoveNumber: 20,
+  sourceOpponent: 'Opponent', sourceDate: '2024.01.15',
   fen: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2',
   solution: 'Nf3', clockAtMoment: 60, leakType: LeakType.TacticalMiss,
 }
 
 describe('SupabaseAnalysisRepositoryAdapter', () => {
-  it('inserts the analysis run with snake_case columns', async () => {
+  it('inserts into analyses table with nested JSON for games and leaks', async () => {
     const db = makeMockDb()
     const adapter = new SupabaseAnalysisRepositoryAdapter(db)
-    await adapter.save(RUN, [], [], [])
-    const [row] = db.inserted['analysis_runs'] as Record<string, unknown>[]
+    await adapter.save(RUN, [GAME], [LEAK], [])
+    
+    const [row] = db.inserted['analyses'] as Record<string, unknown>[]
     expect(row['id']).toBe('run-1')
-    expect(row['source_type']).toBe('pgn-upload')
-    expect(row['games_count']).toBe(5)
+    expect(row['user_id']).toBe('user-123')
+    expect(row['game_count']).toBe(5)
     expect(row['created_at']).toBe('2024-01-15T10:00:00Z')
-    expect(row['user_id']).toBe('user-123')
-    expect(row['is_partial']).toBe(false)
+    
+    const summary = row['summary'] as any
+    expect(summary['sourceType']).toBe('pgn-upload')
+    expect(summary['isPartial']).toBe(false)
+    
+    const games = row['games'] as GameRecord[]
+    expect(games[0].gameId).toBe('g1')
+    
+    const leaks = row['leaks'] as Leak[]
+    expect(leaks[0].type).toBe(LeakType.TacticalMiss)
   })
 
-  it('inserts game records with run_id and user_id', async () => {
-    const db = makeMockDb()
-    await new SupabaseAnalysisRepositoryAdapter(db).save(RUN, [GAME], [], [])
-    const [row] = db.inserted['game_records'] as Record<string, unknown>[]
-    expect(row['gameId']).toBe('g1')
-    expect(row['run_id']).toBe('run-1')
-    expect(row['user_id']).toBe('user-123')
-  })
-
-  it('inserts leaks with run_id', async () => {
-    const db = makeMockDb()
-    await new SupabaseAnalysisRepositoryAdapter(db).save(RUN, [], [LEAK], [])
-    const [row] = db.inserted['leaks'] as Record<string, unknown>[]
-    expect(row['type']).toBe(LeakType.TacticalMiss)
-    expect(row['run_id']).toBe('run-1')
-  })
-
-  it('inserts puzzles with run_id', async () => {
+  it('inserts into puzzles table with mapped columns', async () => {
     const db = makeMockDb()
     await new SupabaseAnalysisRepositoryAdapter(db).save(RUN, [], [], [PUZZLE])
-    const [row] = db.inserted['user_puzzles'] as Record<string, unknown>[]
+    const [row] = db.inserted['puzzles'] as Record<string, unknown>[]
     expect(row['id']).toBe('p1')
-    expect(row['run_id']).toBe('run-1')
+    expect(row['user_id']).toBe('user-123')
+    expect(row['source_game_id']).toBe('g1')
+    expect(row['source_move_number']).toBe(20)
+    expect(row['best_move']).toBe('Nf3')
+    expect(row['played_move']).toBe('unknown')
   })
 
-  it('findById returns a mapped AnalysisRun when a row exists', async () => {
+  it('findById returns a mapped AnalysisRun from analyses table', async () => {
     const db = makeMockDb({
-      findRunResult: { id: 'run-1', source_type: 'pgn-upload', games_count: 5, created_at: '2024-01-15T10:00:00Z', is_partial: false, trend_report: null },
+      findResult: { 
+        id: 'run-1', 
+        user_id: 'user-123',
+        game_count: 5, 
+        created_at: '2024-01-15T10:00:00Z',
+        summary: { sourceType: 'pgn-upload', isPartial: false, trendReport: null },
+        games: [],
+        leaks: []
+      },
     })
     const result = await new SupabaseAnalysisRepositoryAdapter(db).findById('run-1')
     expect(result).toEqual(RUN)
   })
 
-  it('listByUser returns mapped AnalysisRun array', async () => {
+  it('listByUser returns mapped AnalysisRun array from analyses table', async () => {
     const db = makeMockDb({
-      listRunsResult: [
-        { id: 'run-1', source_type: 'pgn-upload', games_count: 5, created_at: '2024-01-15T10:00:00Z', is_partial: false, trend_report: null },
-        { id: 'run-2', source_type: 'lichess-import', games_count: 10, created_at: '2024-01-16T10:00:00Z', is_partial: true, trend_report: null },
+      listResults: [
+        { 
+          id: 'run-1', 
+          game_count: 5, 
+          created_at: '2024-01-15T10:00:00Z', 
+          summary: { sourceType: 'pgn-upload', isPartial: false, trendReport: null },
+          games: [],
+          leaks: []
+        },
+        { 
+          id: 'run-2', 
+          game_count: 10, 
+          created_at: '2024-01-16T10:00:00Z', 
+          summary: { sourceType: 'lichess-import', isPartial: true, trendReport: null },
+          games: [],
+          leaks: []
+        },
       ],
     })
     const result = await new SupabaseAnalysisRepositoryAdapter(db).listByUser('user-123')

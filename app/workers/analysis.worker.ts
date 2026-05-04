@@ -119,6 +119,7 @@ async function getOrComputeBurst(
   playerUsername: string,
   days: number,
   cacheKey: string,
+  requestId: string,
   onProgress?: (p: ProgressPayload) => void,
 ): Promise<AnalysisResult> {
   const cached = burstCache.get(cacheKey)
@@ -141,6 +142,8 @@ async function getOrComputeBurst(
       playerUsername,
       parser,
       engine,
+      requestId,
+      'pgn-upload',
       days,
       (p) => {
         const callbacks = burstProgressCallbacks.get(cacheKey)
@@ -188,6 +191,7 @@ async function runTier(
       playerUsername,
       days,
       cacheKey,
+      requestId,
       (p) => {
         if (!isCancelled(requestId)) {
           post({ type: 'progress', requestId, tier: 'burst', progress: p })
@@ -205,6 +209,8 @@ async function runTier(
     playerUsername,
     parser,
     engine,
+    requestId,
+    'pgn-upload',
     days,
     (p) => {
       if (!isCancelled(requestId)) {
@@ -238,7 +244,7 @@ async function runAnalysisTask(task: AnalyzeTask): Promise<void> {
     if (isCancelled(requestId)) return
     post({ type: 'result', requestId, tier: 'burst', result: burst })
 
-    if (burst.totalGamesInWindow <= BURST_GAME_LIMIT) {
+    if (burst.run.gamesCount <= BURST_GAME_LIMIT) {
       post({ type: 'done', requestId })
       return
     }
@@ -261,7 +267,7 @@ async function runAnalysisTask(task: AnalyzeTask): Promise<void> {
     if (isCancelled(requestId)) return
     post({ type: 'result', requestId, tier: 'mid', result: mid })
 
-    if (mid.totalGamesInWindow <= MID_GAME_LIMIT) {
+    if (mid.run.gamesCount <= MID_GAME_LIMIT) {
       post({ type: 'done', requestId })
       return
     }
@@ -299,7 +305,7 @@ async function runPrewarmTask(task: PrewarmTask): Promise<void> {
 
   activeTask = task
   try {
-    await getOrComputeBurst(task.pgn, task.playerUsername, task.days, task.cacheKey)
+    await getOrComputeBurst(task.pgn, task.playerUsername, task.days, task.cacheKey, task.requestId)
   } catch {
   } finally {
     if (activeTask?.requestId === task.requestId) activeTask = null

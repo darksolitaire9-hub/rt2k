@@ -1,5 +1,6 @@
 import type { AnalysisResult } from '../../shared/application/use-cases/AnalyzePgnUseCase'
 import type { WorkerRequest, WorkerResponse } from '../workers/analysis.worker.types'
+import { useRepository } from './useRepository'
 
 // --- Module-level singletons for persistence across routes ---
 let worker: Worker | null = null
@@ -35,11 +36,21 @@ function handleMessage(event: MessageEvent<WorkerResponse>): void {
       } else {
         backgroundRunning.value = true
       }
+      
+      // Save if background result
+      if (msg.tier !== 'burst') {
+        const repo = useRepository()
+        repo.save(msg.result.run, msg.result.games, msg.result.leaks, msg.result.puzzles)
+      }
       break
 
     case 'done':
       loading.value = false
       backgroundRunning.value = false
+      if (result.value) {
+        const repo = useRepository()
+        repo.save(result.value.run, result.value.games, result.value.leaks, result.value.puzzles)
+      }
       break
 
     case 'error':
@@ -114,7 +125,7 @@ export function useAnalysis() {
   const leaks = computed(() => result.value?.leaks ?? [])
   const puzzles = computed(() => result.value?.puzzles ?? [])
   const puzzleCount = computed(() => puzzles.value.length)
-  const isPartial = computed(() => result.value?.isPartial ?? false)
+  const isPartial = computed(() => result.value?.run.isPartial ?? false)
 
   const hasResult = computed({
     get: () => result.value !== null,
