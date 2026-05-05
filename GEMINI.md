@@ -15,14 +15,14 @@ The app:
 - **Language:** TypeScript
 - **Chess Logic:** chess.js, chessground
 - **Engine:** Stockfish 18 in Web Workers (Pool of 3)
-- **Backend (Planned):** Supabase (see `./docs`)
+- **Backend:** Local-only persistence using IndexedDB (via `idb-keyval`).
 
 ## House Rules
 - **Tone:** Maintain a professional but friendly "bro-to-bro" tone.
 - **SDD Workflow:** Strictly follow the Spec-Driven Development order:
   1. Constitution -> 2. Requirements -> 3. Plan -> 4. Tasks -> 5. Code
 - **Architectural Integrity:** Rigorously maintain the separation between `shared/domain`, `shared/application`, and `app`.
-- **Security:** Never commit real secrets or tokens. Use environment variables. Assume a future Supabase backend with RLS.
+- **Privacy:** Data never leaves the user's browser. No cloud syncing or external accounts.
 - **Small Slices:** Choose one small slice of a task and do it well. Avoid "boiling the ocean".
 - **Documentation:** When behavior changes, update `README.md` or `./docs` accordingly.
 

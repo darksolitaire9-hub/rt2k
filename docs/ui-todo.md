@@ -31,9 +31,8 @@
 
 ## Phase 9 — Persistence (not started)
 
-- [ ] Set up Supabase Auth (required before AC6 can be satisfied)
-- [ ] Apply Supabase schema
-- [ ] Wire up SupabaseAnalysisRepositoryAdapter
+- [x] Implement local repository
+- [ ] Finalize local storage for puzzles
 - [ ] Build "My Analyses" page
 
 ## Deferred domain changes (needed before remaining UI items above)

@@ -30,7 +30,6 @@
   },
   "dependencies": {
     "@nuxt/ui": "^4.7.1",
-    "@nuxtjs/supabase": "^2.0.6",
     "chess.js": "^1.4.0",
     "chessground": "^9.2.1",
     "idb-keyval": "^6.2.2",

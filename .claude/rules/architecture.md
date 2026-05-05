@@ -21,24 +21,22 @@ app/pages
 
 app/adapters
   → shared/domain/ports (to implement)
-  → external libs (chess.js, Stockfish, Supabase client)
+  → external libs (chess.js, Stockfish, IndexedDB client)
 
 ## Strictly forbidden
 - Any import of Vue (ref, computed, watch, etc.) inside shared/
-- Any import of Supabase inside shared/
 - Any import of chessground inside shared/
 - Any use of browser APIs (window, document, navigator) inside shared/
-- Calling chess.js, Stockfish, or Supabase directly from a domain service
+- Calling chess.js, Stockfish, or IndexedDB directly from a domain service
 - app/components importing directly from shared/domain (must go via composables)
 
 ## Ports rule
-Every external dependency (parser, engine, repository, puzzle source)
+Every external dependency (parser, engine, repository)
 must have a corresponding interface in shared/domain/ports.
 No adapter may be instantiated inside domain or application code.
 Dependency injection only — pass the port implementation in from outside.
 
 ## Red flags (stop and ask before proceeding)
-- "import { useSupabaseClient }" anywhere inside shared/
 - "import { ref }" anywhere inside shared/
 - A domain service that calls an adapter method directly
 - A component that imports from shared/domain/services directly

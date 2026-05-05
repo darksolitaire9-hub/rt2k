@@ -32,9 +32,9 @@ Under the hood, rt2k is built as a modern web app:
 - **Board UI:** chessground for interactive boards
 - **Engine:** Stockfish 18 running locally via Web Workers
 - **Language:** TypeScript-first codebase
-- **(Planned) Backend:** Supabase for storing games, positions, and training data
+- **Persistence:** Local-first storage using **IndexedDB** (via `idb-keyval`)
 
-Most analysis currently runs locally in the browser, with a planned Supabase backend guided by the docs in `./docs`.
+The app runs entirely in your browser. All analysis (via Stockfish WASM) and data storage are local, ensuring maximum privacy and zero latency.
 
 ## Getting started (local dev)
 
@@ -57,8 +57,7 @@ Most analysis currently runs locally in the browser, with a planned Supabase bac
 
 3. **Environment variables**
 
-   - Copy `.env.example` to `.env` if present.
-   - Fill in any required values (e.g., Supabase URL / anon key if/when used).
+   - Copy `.env.example` to `.env`.
 
 4. **Run the dev server**
 
@@ -76,7 +75,7 @@ rt2k is intentionally structured with clear layers:
 - `shared/application/` — use cases and application services that orchestrate the domain
 - `app/` — Nuxt/Vue app (components, pages, layouts, composables, workers)
 - `app/workers/` — Web Workers for running Stockfish and heavy analysis off the main thread
-- `docs/` — project “constitution”, plans, data model, Supabase schema, and design decisions
+- `docs/` — project “constitution”, plans, data model, and design decisions
 
 The idea is to keep the chess and analysis brain independent from the UI, so the same core logic could power other interfaces in the future.
 
@@ -97,7 +96,7 @@ I try to keep the repo honest about AI assistance so it can also serve as a smal
 This is an early-stage personal project, so the security posture is evolving. Current focus:
 
 - Keeping environment variables and secrets out of the repo
-- Planning Supabase row-level security (RLS) before storing real user data
+- Planning local security and data integrity before storing user data
 - Running chess analysis locally in the browser via Web Workers
 - Gradually adding documentation in `SECURITY.md` and `docs/security-rules.md`
 
@@ -111,7 +110,7 @@ Contributions, suggestions, and issues are welcome, especially around:
 
 - Better training ideas and features for practical improvement
 - UI/UX tweaks that make analysis and puzzle solving smoother
-- Security and privacy improvements as the Supabase backend comes online
+- Security and privacy improvements as the application evolves
 
 If you send a PR, please keep it small and focused, and feel free to mention if you used an LLM (Gemini, Claude, etc.) to help write it.
 

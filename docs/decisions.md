@@ -18,15 +18,15 @@ Each decision should be stable over time and explain the trade-offs.
 
 ---
 
-## D-002 — Use Supabase for persistence and auth
+## D-002 — Use IndexedDB for local-only persistence
 
 **Status:** Accepted
 
 **Reasoning:**
-- Free tier (50k MAU, 500MB DB) is sufficient for early traction without cost.
-- First-class Nuxt integration via `@nuxtjs/supabase`.
-- Managed Postgres with row-level security fits clean separation between
-  domain and infrastructure.
+- Maximum privacy: data never leaves the user's browser.
+- Zero latency: no network roundtrips for saving/loading data.
+- Reduced complexity: no need for backend management, migrations, or auth logic in v1.
+- Implementation: `idb-keyval` for simple key-value storage of game records and puzzles.
 
 ---
 
@@ -62,8 +62,8 @@ Each decision should be stable over time and explain the trade-offs.
   - Adapters in `app/adapters/*`.
 
 **Implications:**
-- Domain services cannot import Vue, Supabase, or browser APIs.
-- All external systems (Supabase, chess.js, Stockfish, Lichess) sit behind ports.
+- Domain code is technology-agnostic.
+- All external systems (chess.js, Stockfish, IndexedDB) sit behind ports.
 
 ---
 
@@ -98,14 +98,13 @@ Each decision should be stable over time and explain the trade-offs.
 
 **Reasoning:**
 - Free-first constraint: no always-on server costs.
-- Nuxt 4 + Supabase + WASM is sufficient for PGN parsing, local analysis,
+- Nuxt 4 + IndexedDB + WASM is sufficient for PGN parsing, local analysis,
   leak detection, and persistence.
 - Nitro server routes are reserved for future features only.
 
 **Implications:**
 - All analysis logic for v1 runs client-side.
-- Supabase is used only via its client SDK.
-- Any future server-side feature requires a new decision entry.
+- All data persistence for v1 is local-only.
 
 ---
 

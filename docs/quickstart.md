@@ -4,23 +4,14 @@
 Get the first end-to-end flow working: upload PGN → parse games → show summary stats.
 
 ## Prerequisites
-- Node.js 20+
-- pnpm installed globally
-- Supabase project created (free tier)
+- Node.js 22+
+- pnpm
 
 ## Setup
 
 ```sh
 pnpm install
 cp .env.example .env
-# Fill in SUPABASE_URL and SUPABASE_ANON_KEY in .env
-```
-
-Apply the database schema:
-```sh
-# Run in Supabase SQL editor or via CLI
-supabase db push  # if using Supabase CLI
-# or paste docs/supabase-schema.sql into the Supabase dashboard SQL editor
 ```
 
 Start dev server:

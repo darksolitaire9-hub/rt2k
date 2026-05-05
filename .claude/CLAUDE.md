@@ -44,7 +44,7 @@ Full field-level definitions: docs/data-model.md
 Full rules: .claude/rules/architecture.md
 
 Short version:
-- shared/domain/ must never import Vue, Supabase, chessground, or any browser API.
+- shared/domain/ must never import Vue, chessground, or any browser API.
 - All external systems live behind ports in shared/domain/ports.
 - Adapters implement ports. Ports do not know about adapters.
 
@@ -80,4 +80,4 @@ When appropriate:
 - Use Superpowers for planning, TDD, and review of non-trivial tasks.
 - Use Frontend Design when creating or refactoring UI layouts or components.
 - Use web-design-guidelines to audit UI for accessibility and UX issues.
-- Use Trail of Bits security skills when touching auth, Supabase, or external APIs.
+- Use Trail of Bits security skills when touching data integrity or external APIs.

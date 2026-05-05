@@ -47,4 +47,4 @@ external dependency. Adapters implement ports; domain services depend on ports.
 
 ## Adapter
 A concrete implementation of a port in `app/adapters/`. May use external
-libraries (chess.js, Stockfish, Supabase). Never imported by domain code.
+libraries (chess.js, Stockfish). Never imported by domain code.

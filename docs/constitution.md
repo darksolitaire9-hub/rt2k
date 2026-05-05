@@ -26,7 +26,8 @@ and prescribing personalized puzzles grounded in their own mistakes.
 
 ## Architecture
 - Frontend: Nuxt 4 with app/ directory.
-- Persistence/Auth: Supabase.
+- Persistence: IndexedDB (via `idb-keyval`).
+- Auth: None (Local-only).
 - PGN/FEN parsing: chess.js.
 - Board UI: chessground.
 - Engine: Stockfish WASM for targeted, on-demand evaluation only.
@@ -35,7 +36,7 @@ and prescribing personalized puzzles grounded in their own mistakes.
 ## Domain boundaries
 Domain code must stay framework-agnostic:
 - No Vue imports in domain.
-- No Supabase imports in domain.
+- No platform-specific repository imports in domain.
 - No DOM/browser APIs in domain services.
 - Domain owns the language and the contracts (ports).
 
@@ -53,7 +54,7 @@ Primary adapters:
 Secondary adapters:
 - chess.js PGN parser
 - Stockfish WASM engine
-- Supabase repository
+- IndexedDB repository
 - Lichess import adapter (later)
 
 Ports live in shared/domain/ports.
@@ -69,6 +70,7 @@ Adapters implement ports in app/adapters.
 
 ## Out of scope for v1
 - No Lichess OAuth.
+- No cloud syncing or external accounts.
 - No server-side engine.
 - No deep full-history engine analysis for every user upload.
 - No "coach chat" as a core feature.

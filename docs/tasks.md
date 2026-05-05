@@ -34,7 +34,7 @@
 ## Phase 6 — Adapters
 - [x] Implement ChessJsPgnParserAdapter
 - [x] Implement StockfishWasmAdapter
-- [x] Implement SupabaseAnalysisRepositoryAdapter
+- [x] Implement IndexedDbAnalysisRepositoryAdapter
 - [x] Implement LocalPuzzleSourceAdapter
 
 ## Phase 7 — UI
@@ -68,8 +68,8 @@
 - [x] Background analysis indicator and puzzle count on analyze page
 - [x] Align AI instructions and documentation with refined project guidelines
 
-## Phase 9 — Persistence
-- [ ] Set up Supabase Auth (required before AC6)
-- [ ] Apply Supabase schema
-- [ ] Create repository implementation
+## Phase 9 — Persistence (Local Only)
+- [x] Implement IndexedDbAnalysisRepositoryAdapter
 - [ ] Build "My Analyses" page
+- [ ] Finalize local storage for puzzles
+- [ ] Clear local data button in settings

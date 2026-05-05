@@ -113,8 +113,7 @@ New leak types can be added in `leakRules` without touching domain logic.
 ```ts
 // IPgnParserPort     — parses PGN, exposes clockPerMove[] from [%clk]
 // IEnginePort        — evaluates a single FEN, returns bestMove + eval
-// IAnalysisRepositoryPort — persists AnalysisRun, UserPuzzle[], Leak[]
-// IPuzzleSourcePort  — REMOVED (no external puzzle DB in v1)
+// IAnalysisRepositoryPort — persists AnalysisRun, UserPuzzle[], Leak[] via IndexedDB
 ```
 
 
@@ -149,8 +148,9 @@ clock-based heuristics are skipped and `isPartial: true` is set.
 by the parser before FEN extraction.
 - `AnalysisRun.isPartial = true` if games exceed `maxGamesPerAnalysisRun`
 or if clock data is missing. Always surface this in the UI.
-- Domain code stays framework-agnostic: no Vue, no Supabase, no DOM in
-domain services.
+- Domain code stays framework-agnostic: no Vue, no browser repository
+imports, no DOM in domain services.
+- Data never leaves the browser. Persistence is entirely local.
 
 ---
 
@@ -163,28 +163,28 @@ domain services.
 | Full-game Stockfish sweep | Replaced by heuristic pre-filter |
 | ECO-based puzzle filtering | Replaced by position-level sourcing |
 | Hardcoded player assumptions | Everything derived from the upload |
+| Supabase Integration | Pivoted to local-only for v1 |
 
 
 ---
 
 ## Pending Work (Phase 9 onwards)
 
-Before starting Phase 9, update existing code to match this spec:
+1. Remove `IPuzzleSourcePort` and `LocalPuzzleSourceAdapter` (DONE)
+2. Add `clockPerMove[]` to `GameRecord` (DONE)
+3. Add `FLAG_RISK`, `PRE_FLAG_BLUNDER` to `LeakType` (DONE)
+4. Add `isPartial` and `trendReport` to `AnalysisRun` (DONE)
+5. Add `ComputeTrend` domain service (DONE)
+6. Update `DetectMistakes` to use clock + material heuristics (DONE)
+7. Update `leakRules` config with thresholds above (DONE)
+8. Update `ScoreLeaks` to rank leaks using `TrendReport` (DONE)
 
-1. Remove `IPuzzleSourcePort` and `LocalPuzzleSourceAdapter`
-2. Add `clockPerMove[]` to `GameRecord`
-3. Add `FLAG_RISK`, `PRE_FLAG_BLUNDER` to `LeakType`
-4. Add `isPartial` and `trendReport` to `AnalysisRun`
-5. Add `ComputeTrend` domain service
-6. Update `DetectMistakes` to use clock + material heuristics
-7. Update `leakRules` config with thresholds above
-8. Update `ScoreLeaks` to rank leaks using `TrendReport`
+Phase 9:
 
-Then Phase 9:
-
-- [ ] Apply Supabase schema
-- [ ] Create repository implementation
+- [x] Implement IndexedDB repository
 - [ ] Build "My Analyses" page
+- [ ] Finalize local storage for puzzles
+- [ ] Clear local data button in settings
 
 ---
 
@@ -192,5 +192,3 @@ Then Phase 9:
 
 Spec (this doc) → confirm with human → code.
 One task at a time. No scope creep.
-
-```

@@ -49,15 +49,9 @@ jobs:
         run: pnpm playwright install --with-deps chromium
 
       - name: Build
-        env:
-          NUXT_PUBLIC_SUPABASE_URL: https://dummy.supabase.co
-          NUXT_PUBLIC_SUPABASE_KEY: dummy-key
         run: pnpm run build
 
       - name: Run E2E tests
-        env:
-          NUXT_PUBLIC_SUPABASE_URL: https://dummy.supabase.co
-          NUXT_PUBLIC_SUPABASE_KEY: dummy-key
         run: pnpm run test:e2e
 
       - uses: actions/upload-artifact@v4
