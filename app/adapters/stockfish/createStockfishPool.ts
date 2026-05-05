@@ -3,7 +3,7 @@ import type { WorkerRequest, WorkerResponse } from './workerMessages'
 
 export type StockfishPoolOptions = {
   workerCount: number
-  workerScriptUrl: string | URL
+  createWorker: () => Worker
 }
 
 export type StockfishPool = EngineEvaluatorPort & {
@@ -51,7 +51,7 @@ export function createStockfishPool(options: StockfishPoolOptions): StockfishPoo
   }
 
   for (let i = 0; i < options.workerCount; i++) {
-    const worker = new Worker(options.workerScriptUrl, { type: 'module' })
+    const worker = options.createWorker()
     const slot: Slot = { worker, idle: false, activeTaskId: null }
     slots.push(slot)
 

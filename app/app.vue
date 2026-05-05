@@ -3,8 +3,6 @@ const { hydrate } = useAnalysis()
 
 onMounted(async () => {
   await hydrate()
-  const repo = useRepository()
-  repo.syncUnsynced()
 })
 </script>
 

@@ -42,7 +42,7 @@ type QueueTask = AnalyzeTask | PrewarmTask
 const parser = new ChessJsPgnParserAdapter()
 const engine = createStockfishPool({
   workerCount: ENGINE_POOL_SIZE,
-  workerScriptUrl: new URL('../adapters/stockfish/stockfishWorker.ts', import.meta.url)
+  createWorker: () => new Worker(new URL('../adapters/stockfish/stockfishWorker.ts', import.meta.url), { type: 'module' })
 })
 
 const evalCache = new Map<string, { score: number; bestMove: string }>()
