@@ -17,24 +17,38 @@ interface StoredAnalysis {
   puzzles: UserPuzzle[]
 }
 
+function sanitize<T>(data: T): T {
+  try {
+    return structuredClone(data)
+  } catch {
+    // Fallback for Vue Proxies or objects with uncloneable properties (like methods)
+    return JSON.parse(JSON.stringify(data))
+  }
+}
+
 export class IndexedDbAnalysisRepositoryAdapter implements IAnalysisRepositoryPort {
   async save(run: AnalysisRun, games: GameRecord[], leaks: Leak[], puzzles: UserPuzzle[]): Promise<void> {
+    const sRun = sanitize(run)
+    const sGames = sanitize(games)
+    const sLeaks = sanitize(leaks)
+    const sPuzzles = sanitize(puzzles)
+
     // 1. Save Analysis
     const analyses = (await get<Record<string, StoredAnalysis>>(ANALYSES_KEY)) || {}
-    analyses[run.id] = { run, games, leaks, puzzles }
+    analyses[sRun.id] = { run: sRun, games: sGames, leaks: sLeaks, puzzles: sPuzzles }
     await set(ANALYSES_KEY, analyses)
 
-    // 2. Save Puzzles (legacy/global store if needed, but we keep them in StoredAnalysis for sync)
-    if (puzzles.length > 0) {
+    // 2. Save Puzzles
+    if (sPuzzles.length > 0) {
       const allPuzzles = (await get<Record<string, UserPuzzle>>(PUZZLES_KEY)) || {}
-      for (const p of puzzles) {
+      for (const p of sPuzzles) {
         allPuzzles[p.id] = p
       }
       await set(PUZZLES_KEY, allPuzzles)
     }
 
     // 3. Add to sync queue
-    await this.addToSyncQueue(run.id)
+    await this.addToSyncQueue(sRun.id)
   }
 
   async findById(id: string): Promise<AnalysisRun | null> {

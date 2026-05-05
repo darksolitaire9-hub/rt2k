@@ -139,6 +139,23 @@ describe('IndexedDbAnalysisRepositoryAdapter', () => {
     expect(await adapter.getPuzzleSyncQueue()).toContain('p1')
   })
 
+  it('safely sanitizes objects to prevent DataCloneError from Proxies', async () => {
+    const adapter = new IndexedDbAnalysisRepositoryAdapter()
+    
+    // Create an object that is technically uncloneable by native structuredClone (contains a function)
+    const uncloneableRun = {
+      ...RUN,
+      uncloneable: () => 'i am a function'
+    } as any
+
+    await adapter.save(uncloneableRun, [], [], [])
+
+    const saved = await adapter.getFullAnalysis('run-1')
+    expect(saved?.run.id).toBe('run-1')
+    // Function should be stripped by JSON fallback
+    expect((saved?.run as any).uncloneable).toBeUndefined()
+  })
+
   it('manages puzzle sync queue', async () => {
     const adapter = new IndexedDbAnalysisRepositoryAdapter()
     

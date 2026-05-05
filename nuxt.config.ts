@@ -17,7 +17,7 @@ export default defineNuxtConfig({
   },
   vite: {
     optimizeDeps: {
-      include: ['chess.js', 'chessground'],
+      include: ['chess.js', 'chessground', 'idb-keyval'],
     },
   },
 })
