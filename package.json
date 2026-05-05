@@ -20,6 +20,10 @@
     "vite": "^8.0.10",
     "vitest": "^4.1.5"
   },
+  "overrides": {
+    "@nuxt/kit": "4.4.4",
+    "commander": "13.1.0"
+  },
   "dependencies": {
     "@nuxt/ui": "^4.7.1",
     "@nuxtjs/supabase": "^2.0.6",
