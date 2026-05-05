@@ -52,7 +52,22 @@ function toPuzzleRow(p: UserPuzzle, userId: string | null): Record<string, unkno
     // Optional fields
     theme: null,
     rating_hint: null,
-    solved: false,
+    solved: p.solved ?? false,
+  }
+}
+
+function fromPuzzleRow(row: Record<string, unknown>): UserPuzzle {
+  return {
+    id: row['id'] as string,
+    sourceGameId: row['source_game_id'] as string,
+    sourceMoveNumber: row['source_move_number'] as number,
+    sourceOpponent: 'Unknown', // Missing in DB schema
+    sourceDate: (row['created_at'] as string) || new Date().toISOString(),
+    fen: row['fen'] as string,
+    solution: row['best_move'] as string,
+    clockAtMoment: null, // Missing in DB schema
+    leakType: row['leak_type'] as any,
+    solved: row['solved'] as boolean,
   }
 }
 
@@ -63,11 +78,11 @@ export class SupabaseAnalysisRepositoryAdapter implements IAnalysisRepositoryPor
     const { data: authData } = await this.db.auth.getUser()
     const userId = authData?.user?.id ?? null
 
-    const { error: runError } = await this.db.from('analyses').insert([toAnalysesRow(run, games, leaks, userId)])
+    const { error: runError } = await this.db.from('analyses').upsert([toAnalysesRow(run, games, leaks, userId)])
     if (runError) throw new Error(runError.message)
 
     if (puzzles.length > 0) {
-      const { error } = await this.db.from('puzzles').insert(
+      const { error } = await this.db.from('puzzles').upsert(
         puzzles.map(p => toPuzzleRow(p, userId)),
       )
       if (error) throw new Error(error.message)
@@ -91,5 +106,48 @@ export class SupabaseAnalysisRepositoryAdapter implements IAnalysisRepositoryPor
       .eq('user_id', userId)
     if (error || !data) return []
     return (data as Record<string, unknown>[]).map(fromAnalysesRow)
+  }
+
+  async getLatestAnalysis(): Promise<{ run: AnalysisRun; games: GameRecord[]; leaks: Leak[]; puzzles: UserPuzzle[] } | null> {
+    const { data: authData } = await this.db.auth.getUser()
+    const userId = authData?.user?.id ?? null
+    if (!userId) return null
+
+    // 1. Get latest analysis
+    const { data: runData, error: runError } = await this.db
+      .from('analyses')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (runError || !runData) return null
+
+    const row = runData as Record<string, unknown>
+    const run = fromAnalysesRow(row)
+    const games = (row['games'] as GameRecord[]) || []
+    const leaks = (row['leaks'] as Leak[]) || []
+
+    // 2. Get puzzles (for simplicity we get all puzzles for now, 
+    // though ideally we'd filter by those associated with the games in this run)
+    const { data: puzzlesData, error: puzzlesError } = await this.db
+      .from('puzzles')
+      .select('*')
+      .eq('user_id', userId)
+    
+    if (puzzlesError) return null
+    const puzzles = (puzzlesData as Record<string, unknown>[]).map(fromPuzzleRow)
+
+    return { run, games, leaks, puzzles }
+  }
+
+  async updatePuzzleSolved(id: string): Promise<void> {
+    const { error } = await this.db
+      .from('puzzles')
+      .update({ solved: true })
+      .eq('id', id)
+    
+    if (error) throw new Error(error.message)
   }
 }

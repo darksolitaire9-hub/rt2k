@@ -10,4 +10,5 @@ export interface UserPuzzle {
   solution: string
   clockAtMoment: number | null
   leakType: LeakType
+  solved?: boolean
 }

@@ -110,4 +110,43 @@ describe('IndexedDbAnalysisRepositoryAdapter', () => {
     await adapter.addToSyncQueue('run-2')
     expect(await adapter.getSyncQueue()).toEqual(['run-2'])
   })
+
+  it('getLatestAnalysis returns the most recent analysis', async () => {
+    const adapter = new IndexedDbAnalysisRepositoryAdapter()
+    const RUN_OLD = { ...RUN, id: 'old', createdAt: '2023-01-01T00:00:00Z' }
+    const RUN_NEW = { ...RUN, id: 'new', createdAt: '2024-01-01T00:00:00Z' }
+    
+    await adapter.save(RUN_OLD, [], [], [])
+    await adapter.save(RUN_NEW, [], [], [])
+    
+    const latest = await adapter.getLatestAnalysis()
+    expect(latest?.run.id).toBe('new')
+  })
+
+  it('updatePuzzleSolved updates status and adds to puzzle sync queue', async () => {
+    const adapter = new IndexedDbAnalysisRepositoryAdapter()
+    await adapter.save(RUN, [], [], [PUZZLE])
+    
+    await adapter.updatePuzzleSolved('p1')
+    
+    // Check global store
+    expect(mockStore['rt2k-puzzles']['p1'].solved).toBe(true)
+    
+    // Check analysis store
+    expect(mockStore['rt2k-analyses']['run-1'].puzzles[0].solved).toBe(true)
+    
+    // Check puzzle sync queue
+    expect(await adapter.getPuzzleSyncQueue()).toContain('p1')
+  })
+
+  it('manages puzzle sync queue', async () => {
+    const adapter = new IndexedDbAnalysisRepositoryAdapter()
+    
+    await adapter.addToPuzzleSyncQueue('p1')
+    await adapter.addToPuzzleSyncQueue('p2')
+    expect(await adapter.getPuzzleSyncQueue()).toEqual(['p1', 'p2'])
+    
+    await adapter.removeFromPuzzleSyncQueue('p1')
+    expect(await adapter.getPuzzleSyncQueue()).toEqual(['p2'])
+  })
 })

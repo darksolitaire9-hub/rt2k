@@ -74,29 +74,77 @@ export class SyncingAnalysisRepository implements IAnalysisRepositoryPort {
     return await this.local.listByUser(userId)
   }
 
+  async getLatestAnalysis(): Promise<{ run: AnalysisRun; games: GameRecord[]; leaks: Leak[]; puzzles: UserPuzzle[] } | null> {
+    const localLatest = await this.local.getLatestAnalysis()
+
+    const { data } = await this.supabase.auth.getUser()
+    if (!data.user) return localLatest
+
+    const remoteLatest = await this.remote.getLatestAnalysis()
+    if (!localLatest) return remoteLatest
+    if (!remoteLatest) return localLatest
+
+    if (new Date(remoteLatest.run.createdAt).getTime() > new Date(localLatest.run.createdAt).getTime()) {
+      return remoteLatest
+    }
+    return localLatest
+  }
+
+  async updatePuzzleSolved(id: string): Promise<void> {
+    // 1. Always update local first
+    await this.local.updatePuzzleSolved(id)
+
+    // 2. Check if user is logged in
+    const { data } = await this.supabase.auth.getUser()
+    if (!data.user) {
+      return // Stay in local puzzle sync queue
+    }
+
+    // 3. Try to update remote
+    try {
+      await this.remote.updatePuzzleSolved(id)
+      // 4. If remote succeeds, remove from puzzle sync queue
+      await this.local.removeFromPuzzleSyncQueue(id)
+    } catch (error) {
+      console.error(`Failed to sync puzzle update for ${id}:`, error)
+      // Stay in puzzle sync queue for later retry
+    }
+  }
+
   async syncUnsynced(): Promise<void> {
     const { data } = await this.supabase.auth.getUser()
     if (!data.user) return
 
-    const queue = await this.local.getSyncQueue()
-    if (queue.length === 0) return
-
-    console.info(`Syncing ${queue.length} unsynced analyses...`)
-
-    for (const id of queue) {
-      try {
-        const full = await this.local.getFullAnalysis(id)
-        if (full) {
-          await this.remote.save(full.run, full.games, full.leaks, full.puzzles)
-          await this.local.removeFromSyncQueue(id)
-        } else {
-          // ID in queue but not found? Remove it to avoid stuck queue
-          await this.local.removeFromSyncQueue(id)
+    // 1. Sync Analyses
+    const analysesQueue = await this.local.getSyncQueue()
+    if (analysesQueue.length > 0) {
+      console.info(`Syncing ${analysesQueue.length} unsynced analyses...`)
+      for (const id of analysesQueue) {
+        try {
+          const full = await this.local.getFullAnalysis(id)
+          if (full) {
+            await this.remote.save(full.run, full.games, full.leaks, full.puzzles)
+            await this.local.removeFromSyncQueue(id)
+          } else {
+            await this.local.removeFromSyncQueue(id)
+          }
+        } catch (error) {
+          console.error(`Failed to sync analysis ${id}:`, error)
         }
-      } catch (error) {
-        console.error(`Failed to sync analysis ${id}:`, error)
-        // Stop processing queue on error? Or continue? 
-        // Better to continue and try others.
+      }
+    }
+
+    // 2. Sync Puzzle Solved Status
+    const puzzleQueue = await this.local.getPuzzleSyncQueue()
+    if (puzzleQueue.length > 0) {
+      console.info(`Syncing ${puzzleQueue.length} unsynced puzzle updates...`)
+      for (const id of puzzleQueue) {
+        try {
+          await this.remote.updatePuzzleSolved(id)
+          await this.local.removeFromPuzzleSyncQueue(id)
+        } catch (error) {
+          console.error(`Failed to sync puzzle update ${id}:`, error)
+        }
       }
     }
   }

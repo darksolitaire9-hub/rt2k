@@ -12,18 +12,22 @@ function makeMockDb(options: {
   userId?: string
   findResult?: Record<string, unknown> | null
   listResults?: Record<string, unknown>[]
+  puzzlesResults?: Record<string, unknown>[]
   insertError?: string
-} = {}): SupabaseClientLike & { inserted: Record<string, unknown[]> } {
+} = {}): SupabaseClientLike & { inserted: Record<string, unknown[]>; updated: Record<string, any> } {
   const inserted: Record<string, unknown[]> = {}
+  const updated: Record<string, any> = {}
   const {
     userId = 'user-123',
     findResult = null,
     listResults = [],
+    puzzlesResults = [],
     insertError,
   } = options
 
   return {
     inserted,
+    updated,
     auth: {
       async getUser() {
         return { data: { user: { id: userId } } }
@@ -31,15 +35,44 @@ function makeMockDb(options: {
     },
     from(table: string) {
       return {
+        async upsert(rows: Record<string, unknown>[]) {
+          if (insertError) return { error: { message: insertError } }
+          inserted[table] = [...(inserted[table] ?? []), ...rows]
+          return { error: null }
+        },
         async insert(rows: Record<string, unknown>[]) {
           if (insertError) return { error: { message: insertError } }
           inserted[table] = [...(inserted[table] ?? []), ...rows]
           return { error: null }
         },
+        update(values: any) {
+          updated[table] = values
+          return {
+            eq: () => ({ error: null })
+          }
+        },
         select() {
           return {
-            eq(_col: string, _val: string) {
+            eq(col: string, val: string) {
+              if (table === 'puzzles') {
+                return {
+                  then(resolve: (v: unknown) => void) {
+                    resolve({ data: puzzlesResults, error: null })
+                  },
+                }
+              }
               return {
+                order() {
+                  return {
+                    limit() {
+                      return {
+                        async maybeSingle() {
+                          return { data: findResult, error: null }
+                        }
+                      }
+                    }
+                  }
+                },
                 async single() {
                   return { data: findResult, error: null }
                 },
@@ -161,5 +194,45 @@ describe('SupabaseAnalysisRepositoryAdapter', () => {
     expect(result[0]).toEqual(RUN)
     expect(result[1].sourceType).toBe('lichess-import')
     expect(result[1].isPartial).toBe(true)
+  })
+
+  it('getLatestAnalysis returns the latest analysis and its puzzles', async () => {
+    const db = makeMockDb({
+      findResult: {
+        id: 'run-1',
+        user_id: 'user-123',
+        game_count: 5,
+        created_at: '2024-01-15T10:00:00Z',
+        summary: { sourceType: 'pgn-upload', isPartial: false, trendReport: null },
+        games: [GAME],
+        leaks: [LEAK]
+      },
+      puzzlesResults: [
+        {
+          id: 'p1',
+          source_game_id: 'g1',
+          source_move_number: 20,
+          fen: 'fen',
+          best_move: 'Nf3',
+          leak_type: LeakType.TacticalMiss,
+          solved: false
+        }
+      ]
+    })
+    const adapter = new SupabaseAnalysisRepositoryAdapter(db)
+    const result = await adapter.getLatestAnalysis()
+    
+    expect(result?.run.id).toBe('run-1')
+    expect(result?.games).toHaveLength(1)
+    expect(result?.puzzles).toHaveLength(1)
+    expect(result?.puzzles[0].id).toBe('p1')
+  })
+
+  it('updatePuzzleSolved updates the solved column in puzzles table', async () => {
+    const db = makeMockDb()
+    const adapter = new SupabaseAnalysisRepositoryAdapter(db)
+    await adapter.updatePuzzleSolved('p1')
+    
+    expect(db.updated['puzzles']).toEqual({ solved: true })
   })
 })

@@ -10,8 +10,12 @@ const mockLocal = {
   save: vi.fn(),
   findById: vi.fn(),
   listByUser: vi.fn(),
-  getSyncQueue: vi.fn(),
+  getLatestAnalysis: vi.fn(),
+  updatePuzzleSolved: vi.fn(),
+  getSyncQueue: vi.fn(async () => []),
   removeFromSyncQueue: vi.fn(),
+  getPuzzleSyncQueue: vi.fn(async () => []),
+  removeFromPuzzleSyncQueue: vi.fn(),
   getFullAnalysis: vi.fn(),
 }
 
@@ -19,6 +23,8 @@ const mockRemote = {
   save: vi.fn(),
   findById: vi.fn(),
   listByUser: vi.fn(),
+  getLatestAnalysis: vi.fn(),
+  updatePuzzleSolved: vi.fn(),
 }
 
 const mockSupabase = {
@@ -41,6 +47,12 @@ describe('SyncingAnalysisRepository', () => {
 
   beforeEach(() => {
     vi.resetAllMocks()
+    
+    // Set default implementations that persist after reset
+    mockLocal.getSyncQueue.mockResolvedValue([])
+    mockLocal.getPuzzleSyncQueue.mockResolvedValue([])
+    mockSupabase.auth.getUser.mockResolvedValue({ data: { user: null } })
+
     repository = new SyncingAnalysisRepository(
       mockLocal as any,
       mockRemote as any,
@@ -144,6 +156,44 @@ describe('SyncingAnalysisRepository', () => {
 
       expect(result).toBe(RUN)
       expect(mockRemote.findById).toHaveBeenCalledWith('run-1')
+    })
+  })
+
+  describe('updatePuzzleSolved', () => {
+    it('always updates local and stays in puzzle queue if not logged in', async () => {
+      mockSupabase.auth.getUser.mockResolvedValue({ data: { user: null } })
+      
+      await repository.updatePuzzleSolved('p1')
+
+      expect(mockLocal.updatePuzzleSolved).toHaveBeenCalledWith('p1')
+      expect(mockRemote.updatePuzzleSolved).not.toHaveBeenCalled()
+      expect(mockLocal.removeFromPuzzleSyncQueue).not.toHaveBeenCalled()
+    })
+
+    it('updates remote and removes from puzzle queue if logged in', async () => {
+      mockSupabase.auth.getUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
+      mockRemote.updatePuzzleSolved.mockResolvedValue(undefined)
+
+      await repository.updatePuzzleSolved('p1')
+
+      expect(mockLocal.updatePuzzleSolved).toHaveBeenCalled()
+      expect(mockRemote.updatePuzzleSolved).toHaveBeenCalledWith('p1')
+      expect(mockLocal.removeFromPuzzleSyncQueue).toHaveBeenCalledWith('p1')
+    })
+  })
+
+  describe('syncUnsynced (puzzles)', () => {
+    it('syncs puzzle updates in queue when logged in', async () => {
+      mockSupabase.auth.getUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
+      mockLocal.getSyncQueue.mockResolvedValue([])
+      mockLocal.getPuzzleSyncQueue.mockResolvedValue(['p1', 'p2'])
+
+      await repository.syncUnsynced()
+
+      expect(mockRemote.updatePuzzleSolved).toHaveBeenCalledWith('p1')
+      expect(mockRemote.updatePuzzleSolved).toHaveBeenCalledWith('p2')
+      expect(mockLocal.removeFromPuzzleSyncQueue).toHaveBeenCalledWith('p1')
+      expect(mockLocal.removeFromPuzzleSyncQueue).toHaveBeenCalledWith('p2')
     })
   })
 })

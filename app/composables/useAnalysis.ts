@@ -202,6 +202,28 @@ export function useAnalysis() {
     getWorker()
   }
 
+  async function hydrate(): Promise<void> {
+    const repo = useRepository()
+    const latest = await repo.getLatestAnalysis()
+    if (latest) {
+      result.value = { ...latest, mistakes: [] } as AnalysisResult
+    }
+  }
+
+  function markPuzzleSolved(id: string): void {
+    if (!result.value) return
+    result.value = {
+      ...result.value,
+      puzzles: result.value.puzzles.map(p =>
+        p.id === id ? { ...p, solved: true } : p
+      ),
+    }
+    
+    // Persist immediately
+    const repo = useRepository()
+    repo.updatePuzzleSolved(id)
+  }
+
   return {
     result, // Exported for usePuzzles or other synchronization needs
     loading,
@@ -226,5 +248,7 @@ export function useAnalysis() {
     preLoad,
     preAnalyze,
     clear,
+    markPuzzleSolved,
+    hydrate,
   }
 }

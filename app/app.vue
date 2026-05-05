@@ -1,5 +1,8 @@
 <script setup lang="ts">
-onMounted(() => {
+const { hydrate } = useAnalysis()
+
+onMounted(async () => {
+  await hydrate()
   const repo = useRepository()
   repo.syncUnsynced()
 })

@@ -14,6 +14,10 @@ const props = defineProps<{
   }
 }>()
 
+const emit = defineEmits<{
+  (e: 'solved'): void
+}>()
+
 type Feedback = 'idle' | 'correct' | 'wrong' | 'revealed'
 
 const boardEl = ref<HTMLElement | null>(null)
@@ -43,6 +47,7 @@ function initBoard() {
           if (orig + dest === props.puzzle.solution) {
             feedback.value = 'correct'
             cg?.set({ movable: { color: undefined } })
+            emit('solved')
           }
           else {
             feedback.value = 'wrong'

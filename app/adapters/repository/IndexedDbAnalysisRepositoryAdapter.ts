@@ -8,6 +8,7 @@ import type { UserPuzzle } from '../../../shared/domain/entities/UserPuzzle'
 const ANALYSES_KEY = 'rt2k-analyses'
 const PUZZLES_KEY = 'rt2k-puzzles'
 const SYNC_QUEUE_KEY = 'rt2k-sync-queue'
+const PUZZLE_SYNC_QUEUE_KEY = 'rt2k-puzzle-sync-queue'
 
 interface StoredAnalysis {
   run: AnalysisRun
@@ -56,6 +57,45 @@ export class IndexedDbAnalysisRepositoryAdapter implements IAnalysisRepositoryPo
     return Object.values(analyses).map(a => a.run)
   }
 
+  async getLatestAnalysis(): Promise<StoredAnalysis | null> {
+    const analyses = await get<Record<string, StoredAnalysis>>(ANALYSES_KEY)
+    if (!analyses) return null
+    const all = Object.values(analyses)
+    if (all.length === 0) return null
+    
+    // Sort by createdAt descending and return first
+    return all.sort((a, b) => 
+      new Date(b.run.createdAt).getTime() - new Date(a.run.createdAt).getTime()
+    )[0]
+  }
+
+  async updatePuzzleSolved(id: string): Promise<void> {
+    // 1. Update in global puzzles store
+    const allPuzzles = (await get<Record<string, UserPuzzle>>(PUZZLES_KEY)) || {}
+    if (allPuzzles[id]) {
+      allPuzzles[id] = { ...allPuzzles[id], solved: true }
+      await set(PUZZLES_KEY, allPuzzles)
+    }
+
+    // 2. Update in analysis store (where it might be duplicated)
+    const analyses = (await get<Record<string, StoredAnalysis>>(ANALYSES_KEY)) || {}
+    let updated = false
+    for (const runId in analyses) {
+      const analysis = analyses[runId]
+      const puzzleIndex = analysis.puzzles.findIndex(p => p.id === id)
+      if (puzzleIndex !== -1) {
+        analysis.puzzles[puzzleIndex] = { ...analysis.puzzles[puzzleIndex], solved: true }
+        updated = true
+      }
+    }
+    if (updated) {
+      await set(ANALYSES_KEY, analyses)
+    }
+
+    // 3. Add to puzzle sync queue
+    await this.addToPuzzleSyncQueue(id)
+  }
+
   // Sync Queue Methods
   async getSyncQueue(): Promise<string[]> {
     return (await get<string[]>(SYNC_QUEUE_KEY)) || []
@@ -75,6 +115,28 @@ export class IndexedDbAnalysisRepositoryAdapter implements IAnalysisRepositoryPo
     if (index > -1) {
       queue.splice(index, 1)
       await set(SYNC_QUEUE_KEY, queue)
+    }
+  }
+
+  // Puzzle Sync Queue Methods
+  async getPuzzleSyncQueue(): Promise<string[]> {
+    return (await get<string[]>(PUZZLE_SYNC_QUEUE_KEY)) || []
+  }
+
+  async addToPuzzleSyncQueue(id: string): Promise<void> {
+    const queue = await this.getPuzzleSyncQueue()
+    if (!queue.includes(id)) {
+      queue.push(id)
+      await set(PUZZLE_SYNC_QUEUE_KEY, queue)
+    }
+  }
+
+  async removeFromPuzzleSyncQueue(id: string): Promise<void> {
+    const queue = await this.getPuzzleSyncQueue()
+    const index = queue.indexOf(id)
+    if (index > -1) {
+      queue.splice(index, 1)
+      await set(PUZZLE_SYNC_QUEUE_KEY, queue)
     }
   }
 }

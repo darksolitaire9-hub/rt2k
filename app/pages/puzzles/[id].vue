@@ -1,12 +1,30 @@
 <script setup lang="ts">
 const route = useRoute()
 const { puzzles, findById } = usePuzzles()
+const { markPuzzleSolved } = useAnalysis()
 
 const puzzle = computed(() => findById(route.params.id as string))
 
 const currentIndex = computed(() => puzzles.value.findIndex(p => p.id === route.params.id))
 const prevId = computed(() => puzzles.value[currentIndex.value - 1]?.id ?? null)
 const nextId = computed(() => puzzles.value[currentIndex.value + 1]?.id ?? null)
+
+async function onSolved() {
+  if (!puzzle.value) return
+  
+  // Mark as solved
+  markPuzzleSolved(puzzle.value.id)
+  
+  // Auto-navigate after delay
+  if (nextId.value) {
+    setTimeout(() => {
+      // Check if we are still on the same puzzle before navigating
+      if (route.params.id === puzzle.value?.id) {
+        navigateTo(`/puzzles/${nextId.value}`)
+      }
+    }, 1500)
+  }
+}
 </script>
 
 <template>
@@ -42,7 +60,7 @@ const nextId = computed(() => puzzles.value[currentIndex.value + 1]?.id ?? null)
     </div>
 
     <template v-else>
-      <PuzzleBoard :puzzle="puzzle" />
+      <PuzzleBoard :puzzle="puzzle" @solved="onSolved" />
 
       <!-- Prev / Next -->
       <div class="flex gap-3">
