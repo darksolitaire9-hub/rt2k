@@ -20,4 +20,12 @@ export default defineNuxtConfig({
       include: ['chess.js', 'chessground', 'idb-keyval'],
     },
   },
+  routeRules: {
+    '/**': {
+      headers: {
+        'Cross-Origin-Opener-Policy': 'same-origin',
+        'Cross-Origin-Embedder-Policy': 'credentialless',
+      },
+    },
+  },
 })
