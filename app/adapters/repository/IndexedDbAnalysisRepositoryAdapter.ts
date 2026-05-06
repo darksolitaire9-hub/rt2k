@@ -72,36 +72,27 @@ export class IndexedDbAnalysisRepositoryAdapter implements IAnalysisRepositoryPo
 
   async listByUser(_userId: string): Promise<AnalysisRun[]> {
     const index = (await get<string[]>(ANALYSIS_INDEX_KEY)) || []
-    const results: AnalysisRun[] = []
     
-    // Note: This is still O(N) to list metadata, but we only load the small 'run' objects
-    // In a future optimization, we could store the index as [{id, createdAt, gamesCount}]
-    for (const id of index) {
-      const analysis = await get<StoredAnalysis>(getAnalysisKey(id))
-      if (analysis) results.push(analysis.run)
-    }
-    return results
+    // Load all concurrently (O(N) but non-blocking and faster than sequential)
+    const analyses = await Promise.all(index.map(id => get<StoredAnalysis>(getAnalysisKey(id))))
+    return analyses.filter((a): a is StoredAnalysis => a !== undefined).map(a => a.run)
   }
 
   async getLatestAnalysis(): Promise<StoredAnalysis | null> {
     const index = (await get<string[]>(ANALYSIS_INDEX_KEY)) || []
     if (index.length === 0) return null
 
-    // Load all to find latest. 
-    // TODO: In a production app, we would store metadata in the index to avoid loading everything.
-    const all: StoredAnalysis[] = []
-    for (const id of index) {
-      const a = await get<StoredAnalysis>(getAnalysisKey(id))
-      if (a) all.push(a)
-    }
+    // Load all concurrently to find latest
+    const all = await Promise.all(index.map(id => get<StoredAnalysis>(getAnalysisKey(id))))
+    const valid = all.filter((a): a is StoredAnalysis => a !== undefined)
 
-    if (all.length === 0) return null
+    if (valid.length === 0) return null
     
     // Sort by createdAt descending and return first
-    all.sort((a, b) => 
+    valid.sort((a, b) => 
       new Date(b.run.createdAt).getTime() - new Date(a.run.createdAt).getTime()
     )
-    return all[0] || null
+    return valid[0] || null
   }
 
   async updatePuzzleSolved(id: string): Promise<void> {
