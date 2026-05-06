@@ -16,11 +16,11 @@ const PIECE_VALUES: Record<string, number> = {
 
 function materialValue(fen: string, color: 'white' | 'black'): number {
   let total = 0
-  const board = fen.split(' ', 1)[0]
+  const board = fen.split(' ', 1)[0]!
   const isWhiteTarget = color === 'white'
   
   for (let i = 0; i < board.length; i++) {
-    const ch = board[i]
+    const ch = board[i]!
     const val = PIECE_VALUES[ch]
     if (val === undefined) continue
     
@@ -67,7 +67,7 @@ export function detectMistakes(games: ParsedGame[]): MistakeRecord[] {
     // Heuristic 2: PRE_FLAG_BLUNDER — position N moves before time ran out
     if (record.timeLoss && playerMoves.length > PRE_FLAG_LOOKBACK_MOVES) {
       const idx = Math.max(0, playerMoves.length - 1 - PRE_FLAG_LOOKBACK_MOVES)
-      const preFlagMove = playerMoves[idx]
+      const preFlagMove = playerMoves[idx]!
       if (preFlagMove) {
         candidates.push({
           gameId: record.gameId,
@@ -87,15 +87,15 @@ export function detectMistakes(games: ParsedGame[]): MistakeRecord[] {
     // Heuristic 3: TACTICAL_MISS — material swing between consecutive player turns
     for (let i = 0; i < playerMoves.length - 1; i++) {
       if (candidates.length >= MAX_CANDIDATES_PER_GAME) break
-      const before = materialValue(playerMoves[i].fenBefore, record.color)
-      const after = materialValue(playerMoves[i + 1].fenBefore, record.color)
+      const before = materialValue(playerMoves[i]!.fenBefore, record.color)
+      const after = materialValue(playerMoves[i + 1]!.fenBefore, record.color)
       if (before - after >= MATERIAL_SWING_PAWN_UNITS) {
         candidates.push({
           gameId: record.gameId,
-          moveNumber: playerMoves[i].moveNumber,
-          fen: playerMoves[i].fenBefore,
+          moveNumber: playerMoves[i]!.moveNumber,
+          fen: playerMoves[i]!.fenBefore,
           leakType: LeakType.TacticalMiss,
-          clockAtMoment: playerMoves[i].timeRemainingSeconds,
+          clockAtMoment: playerMoves[i]!.timeRemainingSeconds,
           heuristicReason: 'material_swing',
           engineEval: null,
           bestMove: null,
@@ -113,7 +113,7 @@ export function detectMistakes(games: ParsedGame[]): MistakeRecord[] {
       && record.moveCount < EARLY_RESIGNATION_MAX_MOVES
       && playerMoves.length > 0
     ) {
-      const last = playerMoves[playerMoves.length - 1]
+      const last = playerMoves[playerMoves.length - 1]!
       candidates.push({
         gameId: record.gameId,
         moveNumber: last.moveNumber,

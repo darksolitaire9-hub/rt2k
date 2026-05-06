@@ -18,6 +18,8 @@ type Task = {
   reject: (err: Error) => void
 }
 
+const READY_TIMEOUT_MS = 15_000
+
 type Slot = {
   worker: Worker
   idle: boolean
@@ -27,14 +29,15 @@ type Slot = {
 export function createStockfishPool(options: StockfishPoolOptions): StockfishPool {
   const slots: Slot[] = []
   const queue: Task[] = []
+  let head = 0
   const pending = new Map<string, Task>()
 
   const schedule = () => {
-    while (queue.length > 0) {
+    while (head < queue.length) {
       const idleSlot = slots.find(s => s.idle)
       if (!idleSlot) break
 
-      const task = queue.shift()!
+      const task = queue[head++]!
       pending.set(task.id, task)
       idleSlot.idle = false
       idleSlot.activeTaskId = task.id
@@ -48,6 +51,12 @@ export function createStockfishPool(options: StockfishPoolOptions): StockfishPoo
       
       idleSlot.worker.postMessage(request)
     }
+
+    // Cleanup queue memory occasionally
+    if (head > 100 && head === queue.length) {
+      queue.length = 0
+      head = 0
+    }
   }
 
   for (let i = 0; i < options.workerCount; i++) {
@@ -55,19 +64,53 @@ export function createStockfishPool(options: StockfishPoolOptions): StockfishPoo
     const slot: Slot = { worker, idle: false, activeTaskId: null }
     slots.push(slot)
 
+    // If the engine never sends READY (e.g. WASM load blocked), surface a clear error
+    // instead of hanging the analysis queue forever.
+    let readyTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+      readyTimer = null
+      if (slot.idle) return
+      
+      const error = new Error('Chess engine failed to start. Refresh the page and try again.')
+      console.error('[StockfishPool] Ready timeout exceeded. Engine may be blocked by headers or 404.', {
+        workerIndex: i,
+        readyTimeoutMs: READY_TIMEOUT_MS
+      })
+      
+      for (const task of pending.values()) task.reject(error)
+      pending.clear()
+      while (head < queue.length) queue[head++]!.reject(error)
+    }, READY_TIMEOUT_MS)
+
     worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
       const msg = event.data
 
       if (msg.type === 'READY') {
+        if (readyTimer !== null) { clearTimeout(readyTimer); readyTimer = null }
         slot.idle = true
+        console.debug(`[StockfishPool] Worker ${i} is READY`)
         schedule()
         return
       }
 
       if (msg.type === 'EVAL_RESULT' || msg.type === 'ERROR') {
+        if (msg.id === 'init') {
+          // Worker failed to start (e.g. 404 on JS file).
+          // Stop the timer and reject the whole queue.
+          if (readyTimer !== null) { clearTimeout(readyTimer); readyTimer = null }
+          slot.idle = false // Mark dead
+          const errorMsg = msg.type === 'ERROR' ? msg.error : 'Engine initialization failed'
+          console.error(`[StockfishPool] Worker ${i} failed to initialize:`, errorMsg)
+          
+          const error = new Error(errorMsg)
+          for (const task of pending.values()) task.reject(error)
+          pending.clear()
+          while (head < queue.length) queue[head++]!.reject(error)
+          return
+        }
+
         const taskId = slot.activeTaskId
-        
-        // Mark slot idle BEFORE looking up the task
+
+        // Mark slot idle BEFORE looking up the task to prevent race conditions
         slot.idle = true
         slot.activeTaskId = null
         schedule()
@@ -80,6 +123,7 @@ export function createStockfishPool(options: StockfishPoolOptions): StockfishPoo
               // Attach the original FEN since the worker doesn't return it
               task.resolve({ ...msg.result, fen: task.request.fen })
             } else {
+              console.warn(`[StockfishPool] Task ${taskId} failed:`, msg.error)
               task.reject(new Error(msg.error))
             }
           }
@@ -88,7 +132,8 @@ export function createStockfishPool(options: StockfishPoolOptions): StockfishPoo
     }
 
     worker.onerror = (err) => {
-      console.error('[StockfishPool] Worker error:', err)
+      if (readyTimer !== null) { clearTimeout(readyTimer); readyTimer = null }
+      console.error(`[StockfishPool] Worker ${i} crashed:`, err)
       const taskId = slot.activeTaskId
       slot.idle = false // Mark dead
       slot.activeTaskId = null
@@ -97,7 +142,7 @@ export function createStockfishPool(options: StockfishPoolOptions): StockfishPoo
         const task = pending.get(taskId)
         if (task) {
           pending.delete(taskId)
-          task.reject(new Error('Worker crashed'))
+          task.reject(new Error('Engine worker crashed'))
         }
       }
       // Pool degrades gracefully to N-1 workers
@@ -118,6 +163,7 @@ export function createStockfishPool(options: StockfishPoolOptions): StockfishPoo
 
     abortPending() {
       const error = new Error('aborted')
+      console.warn('[StockfishPool] Aborting all pending tasks')
       
       // Reject and clear pending
       for (const task of pending.values()) {
@@ -126,10 +172,12 @@ export function createStockfishPool(options: StockfishPoolOptions): StockfishPoo
       pending.clear()
       
       // Reject and clear queue
-      while (queue.length > 0) {
-        const task = queue.shift()
+      while (head < queue.length) {
+        const task = queue[head++]
         task?.reject(error)
       }
+      queue.length = 0
+      head = 0
     },
 
     dispose() {

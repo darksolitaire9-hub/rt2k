@@ -11,6 +11,7 @@ import type { UserPuzzle } from '../../domain/entities/UserPuzzle'
 import type { MistakeRecord } from '../../domain/entities/MistakeRecord'
 import type { TrendReport } from '../../domain/entities/TrendReport'
 import type { AnalysisRun } from '../../domain/entities/AnalysisRun'
+import type { ParsedGame } from '../../domain/entities/ParsedGame'
 import { LeakType } from '../../domain/value-objects/LeakType'
 import {
   ENGINE_SEARCH_DEPTH_DEEP,
@@ -88,7 +89,7 @@ export async function analyzePgn(
   const capped = isCapped ? pool.slice(-gameLimit) : pool
 
   const games = capped.map(g => g.record)
-  const isPartial = isCapped || games.some(g => g.clockPerMove.every(c => c === null))
+  const isPartial = isCapped || games.some(g => g.clockPerMove.every((c: number | null) => c === null))
 
   onProgress?.({ stage: 'detecting', current: 0, total: 1 })
   const trendReport = computeTrend(games)

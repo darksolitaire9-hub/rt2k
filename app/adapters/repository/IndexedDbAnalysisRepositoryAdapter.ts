@@ -1,14 +1,18 @@
-import { get, set } from 'idb-keyval'
+import { get, set, del } from 'idb-keyval'
 import type { IAnalysisRepositoryPort } from '../../../shared/domain/ports/IAnalysisRepositoryPort'
 import type { AnalysisRun } from '../../../shared/domain/entities/AnalysisRun'
 import type { GameRecord } from '../../../shared/domain/entities/GameRecord'
 import type { Leak } from '../../../shared/domain/entities/Leak'
 import type { UserPuzzle } from '../../../shared/domain/entities/UserPuzzle'
 
-const ANALYSES_KEY = 'rt2k-analyses'
+const ANALYSIS_INDEX_KEY = 'rt2k-analysis-index'
 const PUZZLES_KEY = 'rt2k-puzzles'
 const SYNC_QUEUE_KEY = 'rt2k-sync-queue'
 const PUZZLE_SYNC_QUEUE_KEY = 'rt2k-puzzle-sync-queue'
+
+function getAnalysisKey(id: string) {
+  return `rt2k-analysis-${id}`
+}
 
 interface StoredAnalysis {
   run: AnalysisRun
@@ -33,12 +37,18 @@ export class IndexedDbAnalysisRepositoryAdapter implements IAnalysisRepositoryPo
     const sLeaks = sanitize(leaks)
     const sPuzzles = sanitize(puzzles)
 
-    // 1. Save Analysis
-    const analyses = (await get<Record<string, StoredAnalysis>>(ANALYSES_KEY)) || {}
-    analyses[sRun.id] = { run: sRun, games: sGames, leaks: sLeaks, puzzles: sPuzzles }
-    await set(ANALYSES_KEY, analyses)
+    // 1. Save Analysis individually (O(1) IO)
+    const analysis: StoredAnalysis = { run: sRun, games: sGames, leaks: sLeaks, puzzles: sPuzzles }
+    await set(getAnalysisKey(sRun.id), analysis)
 
-    // 2. Save Puzzles
+    // 2. Update Index
+    const index = (await get<string[]>(ANALYSIS_INDEX_KEY)) || []
+    if (!index.includes(sRun.id)) {
+      index.push(sRun.id)
+      await set(ANALYSIS_INDEX_KEY, index)
+    }
+
+    // 3. Save Puzzles globally
     if (sPuzzles.length > 0) {
       const allPuzzles = (await get<Record<string, UserPuzzle>>(PUZZLES_KEY)) || {}
       for (const p of sPuzzles) {
@@ -47,67 +57,85 @@ export class IndexedDbAnalysisRepositoryAdapter implements IAnalysisRepositoryPo
       await set(PUZZLES_KEY, allPuzzles)
     }
 
-    // 3. Add to sync queue
+    // 4. Add to sync queue
     await this.addToSyncQueue(sRun.id)
   }
 
   async findById(id: string): Promise<AnalysisRun | null> {
-    const analyses = await get<Record<string, StoredAnalysis>>(ANALYSES_KEY)
-    if (!analyses || !analyses[id]) return null
-    return analyses[id].run
+    const analysis = await get<StoredAnalysis>(getAnalysisKey(id))
+    return analysis?.run || null
   }
 
   async getFullAnalysis(id: string): Promise<StoredAnalysis | null> {
-    const analyses = await get<Record<string, StoredAnalysis>>(ANALYSES_KEY)
-    if (!analyses || !analyses[id]) return null
-    return analyses[id]
+    return (await get<StoredAnalysis>(getAnalysisKey(id))) || null
   }
 
   async listByUser(_userId: string): Promise<AnalysisRun[]> {
-    // IndexedDB local storage is per-browser, so we return all local analyses
-    // We don't strictly filter by userId here as there's usually only one user per browser profile
-    const analyses = await get<Record<string, StoredAnalysis>>(ANALYSES_KEY)
-    if (!analyses) return []
-    return Object.values(analyses).map(a => a.run)
+    const index = (await get<string[]>(ANALYSIS_INDEX_KEY)) || []
+    const results: AnalysisRun[] = []
+    
+    // Note: This is still O(N) to list metadata, but we only load the small 'run' objects
+    // In a future optimization, we could store the index as [{id, createdAt, gamesCount}]
+    for (const id of index) {
+      const analysis = await get<StoredAnalysis>(getAnalysisKey(id))
+      if (analysis) results.push(analysis.run)
+    }
+    return results
   }
 
   async getLatestAnalysis(): Promise<StoredAnalysis | null> {
-    const analyses = await get<Record<string, StoredAnalysis>>(ANALYSES_KEY)
-    if (!analyses) return null
-    const all = Object.values(analyses)
+    const index = (await get<string[]>(ANALYSIS_INDEX_KEY)) || []
+    if (index.length === 0) return null
+
+    // Load all to find latest. 
+    // TODO: In a production app, we would store metadata in the index to avoid loading everything.
+    const all: StoredAnalysis[] = []
+    for (const id of index) {
+      const a = await get<StoredAnalysis>(getAnalysisKey(id))
+      if (a) all.push(a)
+    }
+
     if (all.length === 0) return null
     
     // Sort by createdAt descending and return first
-    return all.sort((a, b) => 
+    all.sort((a, b) => 
       new Date(b.run.createdAt).getTime() - new Date(a.run.createdAt).getTime()
-    )[0]
+    )
+    return all[0] || null
   }
 
   async updatePuzzleSolved(id: string): Promise<void> {
     // 1. Update in global puzzles store
     const allPuzzles = (await get<Record<string, UserPuzzle>>(PUZZLES_KEY)) || {}
-    if (allPuzzles[id]) {
-      allPuzzles[id] = { ...allPuzzles[id], solved: true }
+    const puzzle = allPuzzles[id]
+    if (puzzle) {
+      puzzle.solved = true
       await set(PUZZLES_KEY, allPuzzles)
     }
 
-    // 2. Update in analysis store (where it might be duplicated)
-    const analyses = (await get<Record<string, StoredAnalysis>>(ANALYSES_KEY)) || {}
-    let updated = false
-    for (const runId in analyses) {
-      const analysis = analyses[runId]
+    // 2. Update in its specific analysis store (O(1) IO for the correct run)
+    const index = (await get<string[]>(ANALYSIS_INDEX_KEY)) || []
+    for (const runId of index) {
+      const analysis = await get<StoredAnalysis>(getAnalysisKey(runId))
+      if (!analysis) continue
+      
       const puzzleIndex = analysis.puzzles.findIndex(p => p.id === id)
       if (puzzleIndex !== -1) {
-        analysis.puzzles[puzzleIndex] = { ...analysis.puzzles[puzzleIndex], solved: true }
-        updated = true
+        analysis.puzzles[puzzleIndex]!.solved = true
+        await set(getAnalysisKey(runId), analysis)
+        break // Puzzles are currently derived from one run
       }
-    }
-    if (updated) {
-      await set(ANALYSES_KEY, analyses)
     }
 
     // 3. Add to puzzle sync queue
     await this.addToPuzzleSyncQueue(id)
+  }
+
+  async deleteAnalysis(id: string): Promise<void> {
+    await del(getAnalysisKey(id))
+    const index = (await get<string[]>(ANALYSIS_INDEX_KEY)) || []
+    const newIndex = index.filter(i => i !== id)
+    await set(ANALYSIS_INDEX_KEY, newIndex)
   }
 
   // Sync Queue Methods

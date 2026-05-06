@@ -25,8 +25,6 @@ export default defineNuxtConfig({
     server: {
       headers: {
         'Cross-Origin-Opener-Policy': 'same-origin',
-        'Cross-Origin-Embedder-Policy': 'require-corp',
-        'Cross-Origin-Resource-Policy': 'same-origin',
       },
     },
   },
@@ -34,8 +32,6 @@ export default defineNuxtConfig({
     '/**': {
       headers: {
         'Cross-Origin-Opener-Policy': 'same-origin',
-        'Cross-Origin-Embedder-Policy': 'require-corp',
-        'Cross-Origin-Resource-Policy': 'same-origin',
       },
     },
   },

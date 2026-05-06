@@ -9,7 +9,7 @@ export function computeTrend(games: GameRecord[]): TrendReport {
   const flagGames = games.filter(g => g.timeLoss).length
   const flagRate = games.length > 0 ? flagGames / games.length : 0
   const recentRatingDelta = window.length >= 2
-    ? window[window.length - 1].myElo - window[0].myElo
+    ? window[window.length - 1]!.myElo - window[0]!.myElo
     : 0
   const dominantTermination: TrendReport['dominantTermination'] =
     flagRate > 0.4 ? 'Time forfeit' : flagRate < 0.1 ? 'Normal' : 'mixed'

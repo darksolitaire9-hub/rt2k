@@ -36,14 +36,14 @@ function parseEval(comment: string): number | null {
   if (comment.includes('[%eval #')) return 9999
   const match = comment.match(/\[%eval\s+(-?[\d.]+)/)
   if (!match) return null
-  return Math.round(parseFloat(match[1]) * 100)
+  return Math.round(parseFloat(match[1]!) * 100)
 }
 
 function parseClk(comment: string): number | null {
   if (!comment) return null
   const match = comment.match(/\[%clk\s+(\d+):(\d+):(\d+)/)
   if (!match) return null
-  return parseInt(match[1]) * 3600 + parseInt(match[2]) * 60 + parseInt(match[3])
+  return parseInt(match[1]!) * 3600 + parseInt(match[2]!) * 60 + parseInt(match[3]!)
 }
 
 function mapResult(resultHeader: string, color: 'white' | 'black'): GameResult {
@@ -94,7 +94,7 @@ export class ChessJsPgnParserAdapter implements IPgnParserPort {
     for (let i = rawGames.length - 1; i >= 0; i--) {
       if (limit && results.length >= limit) break
       
-      const gamePgn = rawGames[i]
+      const gamePgn = rawGames[i]!
       const headers = this.parseHeaders(gamePgn)
       
       // Filter by username
@@ -188,7 +188,7 @@ export class ChessJsPgnParserAdapter implements IPgnParserPort {
     const headers: Record<string, string> = {}
     const matches = pgn.matchAll(/\[(\w+)\s+"([^"]+)"\]/g)
     for (const match of matches) {
-      headers[match[1]] = match[2]
+      headers[match[1]!] = match[2]!
     }
     return headers
   }

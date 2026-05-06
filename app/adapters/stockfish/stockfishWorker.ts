@@ -22,11 +22,11 @@ class EngineProxy {
       } else if (line.startsWith('info')) {
         const cpMatch = line.match(/score cp (-?\d+)/)
         if (cpMatch) {
-          this.latestScoreCp = parseInt(cpMatch[1], 10)
+          this.latestScoreCp = parseInt(cpMatch[1]!, 10)
         }
         const mateMatch = line.match(/score mate (-?\d+)/)
         if (mateMatch) {
-          const mateIn = parseInt(mateMatch[1], 10)
+          const mateIn = parseInt(mateMatch[1]!, 10)
           this.latestScoreCp = mateIn > 0 ? 9999 : -9999
         }
       } else if (line.startsWith('bestmove')) {
@@ -76,7 +76,7 @@ self.addEventListener('message', (event: MessageEvent<WorkerRequest>) => {
 
 function init() {
   proxy = new EngineProxy(
-    '/stockfish/stockfish.js',
+    '/stockfish/stockfish-18-lite-single.js',
     () => {
       self.postMessage({ id: 'init', type: 'READY' } as WorkerResponse)
     },
