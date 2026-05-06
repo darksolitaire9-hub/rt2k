@@ -46,13 +46,28 @@ jobs:
         run: pnpm test
 
       - name: Install Playwright Browsers
-        run: pnpm playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
 
-      - name: Build
+      - name: Build for E2E
         run: pnpm run build
+        env:
+          NITRO_PRESET: node-server
 
       - name: Run E2E tests
         run: pnpm run test:e2e
+        env:
+          NITRO_PRESET: node-server
+
+      - name: Build for Production (Cloudflare)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          pnpm run build
+          # Create dist symlink if needed for Cloudflare Pages legacy settings
+          if [ -d .output/public ]; then
+            ln -s .output/public dist || true
+          fi
+        env:
+          NITRO_PRESET: cloudflare-pages
 
       - uses: actions/upload-artifact@v4
         if: always()

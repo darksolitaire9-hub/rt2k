@@ -1,7 +1,7 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-01-01',
   nitro: {
-    preset: 'cloudflare-pages',
+    preset: process.env.NITRO_PRESET || 'cloudflare-pages',
   },
   modules: ['@nuxt/ui', '@nuxt/test-utils/module'],
   css: ['~/assets/css/main.css'],
