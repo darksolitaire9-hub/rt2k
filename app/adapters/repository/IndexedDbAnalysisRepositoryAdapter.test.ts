@@ -16,8 +16,8 @@ vi.mock('idb-keyval', () => ({
   set: vi.fn(async (key: string, val: any) => {
     mockStore[key] = val
   }),
-  update: vi.fn(async (key: string, updater: (val: any) => any) => {
-    mockStore[key] = updater(mockStore[key])
+  del: vi.fn(async (key: string) => {
+    delete mockStore[key]
   })
 }))
 
@@ -63,8 +63,9 @@ describe('IndexedDbAnalysisRepositoryAdapter', () => {
     const adapter = new IndexedDbAnalysisRepositoryAdapter()
     await adapter.save(RUN, [GAME], [LEAK], [PUZZLE])
 
-    expect(mockStore['rt2k-analyses']['run-1']).toBeDefined()
-    expect(mockStore['rt2k-analyses']['run-1'].run).toEqual(RUN)
+    expect(mockStore['rt2k-analysis-run-1']).toBeDefined()
+    expect(mockStore['rt2k-analysis-run-1'].run).toEqual(RUN)
+    expect(mockStore['rt2k-analysis-index']).toContain('run-1')
     expect(mockStore['rt2k-puzzles']['p1']).toEqual(PUZZLE)
     expect(mockStore['rt2k-sync-queue']).toContain('run-1')
   })
@@ -133,7 +134,7 @@ describe('IndexedDbAnalysisRepositoryAdapter', () => {
     expect(mockStore['rt2k-puzzles']['p1'].solved).toBe(true)
     
     // Check analysis store
-    expect(mockStore['rt2k-analyses']['run-1'].puzzles[0].solved).toBe(true)
+    expect(mockStore['rt2k-analysis-run-1'].puzzles[0].solved).toBe(true)
     
     // Check puzzle sync queue
     expect(await adapter.getPuzzleSyncQueue()).toContain('p1')
