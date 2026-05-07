@@ -12,6 +12,8 @@ This project is a personal training ground that:
 
 It started as “I have a problem in my chess” and turned into “what if I just built the tool I wish existed?”
 
+🔗 **Live:** [rt2k.pages.dev](https://rt2k.pages.dev)
+
 ## What rt2k does
 
 rt2k focuses on **personalized chess improvement** rather than generic puzzles:
@@ -49,10 +51,10 @@ The app runs entirely in your browser. All analysis (via Stockfish WASM) and dat
 
 2. **Install dependencies**
 
-   Use your preferred package manager (example with npm):
+   Use your preferred package manager (example with pnpm):
 
    ```bash
-   npm install
+   pnpm install
    ```
 
 3. **Environment variables**
@@ -62,7 +64,7 @@ The app runs entirely in your browser. All analysis (via Stockfish WASM) and dat
 4. **Run the dev server**
 
    ```bash
-   npm run dev
+   pnpm run dev
    ```
 
 5. Open the app in your browser at the URL printed in the terminal.
@@ -78,6 +80,10 @@ rt2k is intentionally structured with clear layers:
 - `docs/` — project “constitution”, plans, data model, and design decisions
 
 The idea is to keep the chess and analysis brain independent from the UI, so the same core logic could power other interfaces in the future.
+
+## Design & Architecture
+
+See [`docs/`](./docs) for design decisions and architecture notes.
 
 For more detail, check the files under `./docs` (plan, data-model, decisions, etc.).
 
@@ -117,3 +123,7 @@ If you send a PR, please keep it small and focused, and feel free to mention if 
 ## License
 
 This project is licensed under the [MIT License](./LICENSE).
+
+## Preview
+
+<!-- TODO: Add screenshot or GIF of a puzzle being solved -->
