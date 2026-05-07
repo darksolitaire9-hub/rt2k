@@ -22,3 +22,13 @@ Thumbs.db
 
 # Data
 game_shape/
+
+# Playwright test artifacts
+playwright-report/
+test-results/
+
+# AI assistant config (personal tooling)
+GEMINI.md
+skills-lock.json
+.claude/
+.agents/
