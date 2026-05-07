@@ -21,7 +21,7 @@ The app:
 - **Tone:** Maintain a professional but friendly "bro-to-bro" tone.
 - **SDD Workflow:** Strictly follow the Spec-Driven Development order:
   1. Constitution -> 2. Requirements -> 3. Plan -> 4. Tasks -> 5. Code
-- **Architectural Integrity:** Rigorously maintain the separation between `shared/domain`, `shared/application`, and `app`.
+- **Architectural Integrity:** Rigorously maintain the separation between `shared/domain`, `shared/application`, and `app`. Use the `#shared` alias for all imports from `app/` into the `shared/` directory to ensure build compatibility.
 - **Privacy:** Data never leaves the user's browser. No cloud syncing or external accounts.
 - **Small Slices:** Choose one small slice of a task and do it well. Avoid "boiling the ocean".
 - **Documentation:** When behavior changes, update `README.md` or `./docs` accordingly.

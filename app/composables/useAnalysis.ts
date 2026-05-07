@@ -1,4 +1,4 @@
-import type { AnalysisResult } from '../../shared/application/use-cases/AnalyzePgnUseCase'
+import type { AnalysisResult } from '#shared/application/use-cases/AnalyzePgnUseCase'
 import type { WorkerRequest, WorkerResponse } from '../workers/analysis.worker.types'
 import { useRepository } from './useRepository'
 

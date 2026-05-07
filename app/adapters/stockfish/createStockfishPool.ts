@@ -1,4 +1,4 @@
-import type { EngineEvaluatorPort, EvalRequest, EvalResult } from '../../../shared/domain/ports/EngineEvaluatorPort'
+import type { EngineEvaluatorPort, EvalRequest, EvalResult } from '#shared/domain/ports/EngineEvaluatorPort'
 import type { WorkerRequest, WorkerResponse } from './workerMessages'
 
 export type StockfishPoolOptions = {

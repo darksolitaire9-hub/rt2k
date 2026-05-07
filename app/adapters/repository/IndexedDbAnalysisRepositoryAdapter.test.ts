@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { IndexedDbAnalysisRepositoryAdapter } from './IndexedDbAnalysisRepositoryAdapter'
-import { GameResult } from '../../../shared/domain/value-objects/GameResult'
-import { TerminationType } from '../../../shared/domain/value-objects/TerminationType'
-import { LeakType } from '../../../shared/domain/value-objects/LeakType'
-import type { AnalysisRun } from '../../../shared/domain/entities/AnalysisRun'
-import type { GameRecord } from '../../../shared/domain/entities/GameRecord'
-import type { Leak } from '../../../shared/domain/entities/Leak'
-import type { UserPuzzle } from '../../../shared/domain/entities/UserPuzzle'
+import { GameResult } from '#shared/domain/value-objects/GameResult'
+import { TerminationType } from '#shared/domain/value-objects/TerminationType'
+import { LeakType } from '#shared/domain/value-objects/LeakType'
+import type { AnalysisRun } from '#shared/domain/entities/AnalysisRun'
+import type { GameRecord } from '#shared/domain/entities/GameRecord'
+import type { Leak } from '#shared/domain/entities/Leak'
+import type { UserPuzzle } from '#shared/domain/entities/UserPuzzle'
 
 // Mock idb-keyval
 const mockStore: Record<string, any> = {}

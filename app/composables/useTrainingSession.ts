@@ -1,4 +1,4 @@
-import type { UserPuzzle } from '../../shared/domain/entities/UserPuzzle'
+import type { UserPuzzle } from '#shared/domain/entities/UserPuzzle'
 
 // Module-level singleton — persists across route changes like useAnalysis
 const snapshot = ref<UserPuzzle[]>([])

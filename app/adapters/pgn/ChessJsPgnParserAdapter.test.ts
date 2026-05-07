@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { ChessJsPgnParserAdapter } from './ChessJsPgnParserAdapter'
-import { GameResult } from '../../../shared/domain/value-objects/GameResult'
-import { TerminationType } from '../../../shared/domain/value-objects/TerminationType'
+import { GameResult } from '#shared/domain/value-objects/GameResult'
+import { TerminationType } from '#shared/domain/value-objects/TerminationType'
 
 const PLAYER = 'testplayer'
 const OPPONENT = 'opponent'
