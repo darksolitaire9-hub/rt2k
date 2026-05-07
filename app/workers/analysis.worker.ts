@@ -5,17 +5,17 @@ import {
   BURST_GAME_LIMIT,
   MID_GAME_LIMIT,
   MAX_GAMES_PER_ANALYSIS_RUN,
-} from '../../shared/application/use-cases/AnalyzePgnUseCase'
+} from '#shared/application/use-cases/AnalyzePgnUseCase'
 import { ChessJsPgnParserAdapter } from '../adapters/pgn/ChessJsPgnParserAdapter'
 import { createStockfishPool } from '../adapters/stockfish/createStockfishPool'
-import type { AnalysisResult } from '../../shared/application/use-cases/AnalyzePgnUseCase'
+import type { AnalysisResult } from '#shared/application/use-cases/AnalyzePgnUseCase'
 import {
   makeCacheKey,
   type AnalyzeTier,
   type WorkerRequest,
   type WorkerResponse,
 } from './analysis.worker.types'
-import { ENGINE_POOL_SIZE } from '../../shared/domain/config/leakRules'
+import { ENGINE_POOL_SIZE } from '#shared/domain/config/leakRules'
 
 type ProgressPayload = { stage: string; current: number; total: number }
 

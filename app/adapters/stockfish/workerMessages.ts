@@ -1,4 +1,4 @@
-import type { EvalResult } from '../../../shared/domain/ports/EngineEvaluatorPort'
+import type { EvalResult } from '#shared/domain/ports/EngineEvaluatorPort'
 
 export type WorkerRequest = {
   id: string

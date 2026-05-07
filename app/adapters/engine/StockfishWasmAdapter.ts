@@ -1,4 +1,4 @@
-import type { IEnginePort, EngineResult, EvalOptions } from '../../../shared/domain/ports/IEnginePort'
+import type { IEnginePort, EngineResult, EvalOptions } from '#shared/domain/ports/IEnginePort'
 
 export interface StockfishEngine {
   postMessage(msg: string): void

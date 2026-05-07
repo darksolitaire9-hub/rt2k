@@ -1,4 +1,4 @@
-import { NARRATIVE, getRandomNarrative } from '../../shared/domain/services/NarrativeService'
+import { NARRATIVE, getRandomNarrative } from '#shared/domain/services/NarrativeService'
 
 export function useNarrative() {
   const getLoadingMessage = (stage: string) => {

@@ -1,14 +1,14 @@
 import { Chess } from 'chess.js'
-import type { IPgnParserPort, PgnParserOptions } from '../../../shared/domain/ports/IPgnParserPort'
-import type { ParsedGame, ParsedMove } from '../../../shared/domain/entities/ParsedGame'
-import type { GameRecord } from '../../../shared/domain/entities/GameRecord'
-import { GameResult } from '../../../shared/domain/value-objects/GameResult'
-import { TerminationType } from '../../../shared/domain/value-objects/TerminationType'
+import type { IPgnParserPort, PgnParserOptions } from '#shared/domain/ports/IPgnParserPort'
+import type { ParsedGame, ParsedMove } from '#shared/domain/entities/ParsedGame'
+import type { GameRecord } from '#shared/domain/entities/GameRecord'
+import { GameResult } from '#shared/domain/value-objects/GameResult'
+import { TerminationType } from '#shared/domain/value-objects/TerminationType'
 import {
   BLUNDER_THRESHOLD_CP,
   OPENING_PHASE_UNTIL_MOVE,
   MIDDLEGAME_PHASE_UNTIL_MOVE,
-} from '../../../shared/domain/config/leakRules'
+} from '#shared/domain/config/leakRules'
 
 function splitPgnOptimized(pgn: string): string[] {
   const games: string[] = []

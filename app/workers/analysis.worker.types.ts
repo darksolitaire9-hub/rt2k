@@ -1,4 +1,4 @@
-import type { AnalysisResult } from '../../shared/application/use-cases/AnalyzePgnUseCase'
+import type { AnalysisResult } from '#shared/application/use-cases/AnalyzePgnUseCase'
 
 export type AnalyzeTier = 'burst' | 'mid' | 'deep'
 
