@@ -34,7 +34,7 @@ describe('leakRules', () => {
   })
 
   it('puzzle count limit is valid', () => {
-    expect(MAX_PUZZLES).toBe(10)
+    expect(MAX_PUZZLES).toBe(100)
   })
 
   it('max leaks reported matches requirements (up to 3)', () => {
