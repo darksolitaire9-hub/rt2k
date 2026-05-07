@@ -22,6 +22,13 @@ const {
   preAnalyze,
 } = useAnalysis()
 
+const { getWarning } = useNarrative()
+const { unsolvedPuzzles } = usePuzzles()
+
+const allPuzzlesSolved = computed(() => {
+  return puzzleCount.value > 0 && unsolvedPuzzles.value.length === 0 && !backgroundRunning.value
+})
+
 const backgroundMessage = computed(() => {
   if (!backgroundRunning.value) return ''
   const { stage, current, total } = backgroundProgress.value
@@ -94,7 +101,9 @@ const openingOpen = ref(false)
       <!-- Partial analysis notice -->
       <div v-if="isPartial" class="flex items-center gap-3 px-4 py-3 rounded-[--radius-stm] bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30">
         <UIcon name="i-lucide-clock" class="size-4 text-amber-500 shrink-0" />
-        <p class="text-xs font-medium text-amber-800 dark:text-amber-200">Partial analysis — some positions weren't evaluated due to missing clock data.</p>
+        <p class="text-xs font-medium text-amber-800 dark:text-amber-200">
+          {{ getWarning('clockless') }}
+        </p>
       </div>
 
       <!-- Puzzle Hero CTA -->
@@ -102,20 +111,28 @@ const openingOpen = ref(false)
         <div class="flex items-start justify-between">
           <div class="space-y-1">
             <h2 class="stm-heading text-3xl">
-              {{ puzzleCount }} Puzzles
+              {{ allPuzzlesSolved ? 'Puzzles Done!' : `${unsolvedPuzzles.length} Puzzles` }}
             </h2>
             <p class="text-white/70 font-medium text-sm">
-              Custom-built from your actual mistakes.
+              {{ allPuzzlesSolved ? 'You caught all the crucial mistakes. Great work.' : 'Custom-built from your actual mistakes.' }}
             </p>
           </div>
-          <UIcon name="i-lucide-sparkles" class="size-10 text-white/30" />
+          <UIcon :name="allPuzzlesSolved ? 'i-lucide-award' : 'i-lucide-sparkles'" class="size-10 text-white/30" />
         </div>
+        
         <button 
+          v-if="!allPuzzlesSolved"
           class="w-full min-h-[56px] bg-white text-forest dark:text-emerald font-display font-bold uppercase tracking-wider rounded-[--radius-stm] flex items-center justify-center transition-transform active:scale-[0.98]"
           @click="navigateTo('/puzzles')"
         >
           Train now
         </button>
+        <div 
+          v-else
+          class="w-full min-h-[56px] bg-white/10 text-white font-display font-bold uppercase tracking-wider rounded-[--radius-stm] flex items-center justify-center border border-white/20"
+        >
+          Analysis Exhausted
+        </div>
       </div>
 
       <AnalysisSummaryCard

@@ -29,8 +29,17 @@ function handleMessage(event: MessageEvent<WorkerResponse>): void {
       }
       break
 
-    case 'result':
-      result.value = msg.result
+    case 'result': {
+      const newResult = msg.result
+      // Preserve solved state from current result
+      if (result.value) {
+        const solvedIds = new Set(result.value.puzzles.filter(p => p.solved).map(p => p.id))
+        for (const p of newResult.puzzles) {
+          if (solvedIds.has(p.id)) p.solved = true
+        }
+      }
+      result.value = newResult
+      
       if (msg.tier === 'burst') {
         loading.value = false
       } else {
@@ -40,9 +49,10 @@ function handleMessage(event: MessageEvent<WorkerResponse>): void {
       // Save if background result
       if (msg.tier !== 'burst') {
         const repo = useRepository()
-        repo.save(msg.result.run, msg.result.games, msg.result.leaks, msg.result.puzzles)
+        repo.save(newResult.run, newResult.games, newResult.leaks, newResult.puzzles)
       }
       break
+    }
 
     case 'done':
       loading.value = false

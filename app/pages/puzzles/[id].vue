@@ -1,13 +1,13 @@
 <script setup lang="ts">
 const route = useRoute()
-const { puzzles, findById } = usePuzzles()
+const { allPuzzles, findById } = usePuzzles()
 const { markPuzzleSolved } = useAnalysis()
 
 const puzzle = computed(() => findById(route.params.id as string))
 
-const currentIndex = computed(() => puzzles.value.findIndex(p => p.id === route.params.id))
-const prevId = computed(() => puzzles.value[currentIndex.value - 1]?.id ?? null)
-const nextId = computed(() => puzzles.value[currentIndex.value + 1]?.id ?? null)
+const currentIndex = computed(() => allPuzzles.value.findIndex(p => p.id === route.params.id))
+const prevId = computed(() => allPuzzles.value[currentIndex.value - 1]?.id ?? null)
+const nextId = computed(() => allPuzzles.value[currentIndex.value + 1]?.id ?? null)
 
 async function onSolved() {
   if (!puzzle.value) return
@@ -42,7 +42,7 @@ async function onSolved() {
         <p class="text-[10px] uppercase font-bold tracking-widest text-moss/40 dark:text-mint/30">Training</p>
         <h1 class="stm-heading text-xl text-charcoal dark:text-white">
           Puzzle {{ currentIndex + 1 }}
-          <span class="text-moss dark:text-mint/40 font-medium text-base">/ {{ puzzles.length }}</span>
+          <span class="text-moss dark:text-mint/40 font-medium text-base">/ {{ allPuzzles.length }}</span>
         </h1>
       </div>
     </div>

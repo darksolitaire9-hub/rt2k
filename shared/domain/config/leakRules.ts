@@ -29,13 +29,13 @@ export const BURST_GAME_LIMIT = 3      // tier-1: first puzzles in ~1s
 export const MID_GAME_LIMIT = 15       // tier-2: more coverage, still quick
 export const MAX_EVALS_BURST = 10      // evals for tier-1
 export const MAX_EVALS_MID = 25        // evals for tier-2
-export const MAX_EVALS_FULL = 60       // evals for tier-3 deep background
+export const MAX_EVALS_FULL = 100       // evals for tier-3 deep background
 export const MIN_GAMES_FOR_LEAK_PATTERN = 5
 export const TREND_WINDOW_GAMES = 50
 
 // Output limits
 export const MAX_LEAKS_REPORTED = 3
-export const MAX_PUZZLES = 10
+export const MAX_PUZZLES = 100
 
 // Relative weights used by ScoreLeaks
 export const LEAK_WEIGHTS = {

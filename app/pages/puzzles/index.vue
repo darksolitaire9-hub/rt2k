@@ -1,25 +1,19 @@
 <script setup lang="ts">
 const route = useRoute()
 const { result } = useAnalysis()
-const { start } = useTrainingSession()
-const { puzzles } = usePuzzles()
+const { getEmptyState } = useNarrative()
+const { activePuzzles, solvedPuzzles, allPuzzles } = usePuzzles()
 
-// Freeze the current live puzzle list as the training snapshot the moment the
-// user enters the puzzle list. This prevents background analysis updates from
-// invalidating a puzzle ID the user is currently solving.
-onMounted(() => {
-  if (result.value?.puzzles?.length) {
-    start(result.value.puzzles)
-  }
-})
+const activeTab = ref<'todo' | 'completed'>('todo')
 
 const typeFilter = computed(() => route.query.type as string | undefined)
 
-const filtered = computed(() =>
-  typeFilter.value
-    ? puzzles.value.filter(p => p.leakType === typeFilter.value)
-    : puzzles.value,
-)
+const filtered = computed(() => {
+  const source = activeTab.value === 'todo' ? activePuzzles.value : solvedPuzzles.value
+  return typeFilter.value
+    ? source.filter(p => p.leakType === typeFilter.value)
+    : source
+})
 
 function solve(id: string) {
   navigateTo(`/puzzles/${id}`)
@@ -44,12 +38,32 @@ function solve(id: string) {
       </button>
     </div>
 
+    <!-- Tab Switcher -->
+    <div v-if="allPuzzles.length > 0" class="flex p-1 gap-1 rounded-[--radius-stm] bg-sage/20 dark:bg-forest/10 border border-sage/30 dark:border-forest/20">
+      <button
+        class="flex-1 py-2 text-[10px] uppercase font-bold tracking-widest rounded-sm transition-all"
+        :class="activeTab === 'todo' ? 'bg-white dark:bg-forest text-forest dark:text-emerald shadow-sm' : 'text-moss/50 dark:text-mint/30 hover:text-moss dark:hover:text-mint/50'"
+        @click="activeTab = 'todo'"
+      >
+        To Do ({{ activePuzzles.length }})
+      </button>
+      <button
+        class="flex-1 py-2 text-[10px] uppercase font-bold tracking-widest rounded-sm transition-all"
+        :class="activeTab === 'completed' ? 'bg-white dark:bg-forest text-forest dark:text-emerald shadow-sm' : 'text-moss/50 dark:text-mint/30 hover:text-moss dark:hover:text-mint/50'"
+        @click="activeTab = 'completed'"
+      >
+        History ({{ solvedPuzzles.length }})
+      </button>
+    </div>
+
     <!-- Empty: no puzzles at all -->
-    <div v-if="!puzzles.length" class="stm-card space-y-4 text-center py-12">
+    <div v-if="!allPuzzles.length" class="stm-card space-y-4 text-center py-12">
       <UIcon name="i-lucide-puzzle" class="size-12 text-forest/20 dark:text-emerald/20 mx-auto" />
       <div class="space-y-1">
         <h2 class="stm-heading text-xl text-charcoal dark:text-white">No puzzles yet</h2>
-        <p class="text-sm font-medium text-moss dark:text-mint/50">Upload and analyse a PGN to generate puzzles from your games.</p>
+        <p class="text-sm font-medium text-moss dark:text-mint/50">
+          {{ getEmptyState('noPuzzles') }}
+        </p>
       </div>
       <button class="stm-button-hero" @click="navigateTo('/analyze')">
         Go to Analyse
@@ -57,9 +71,31 @@ function solve(id: string) {
     </div>
 
     <!-- Empty: filter active but no matches -->
-    <div v-else-if="!filtered.length" class="stm-card space-y-2 text-center py-10">
+    <div v-else-if="!filtered.length && typeFilter" class="stm-card space-y-2 text-center py-10">
       <h2 class="stm-heading text-lg text-charcoal dark:text-white">No puzzles for this leak type</h2>
       <p class="text-sm font-medium text-moss dark:text-mint/50">Try a different filter or clear it to see all puzzles.</p>
+    </div>
+
+    <!-- Empty: Tab specific -->
+    <div v-else-if="!filtered.length" class="stm-card space-y-4 text-center py-12">
+      <template v-if="activeTab === 'todo'">
+        <UIcon name="i-lucide-check-circle" class="size-12 text-forest dark:text-emerald mx-auto" />
+        <div class="space-y-1">
+          <h2 class="stm-heading text-xl text-charcoal dark:text-white">All caught up!</h2>
+          <p class="text-sm font-medium text-moss dark:text-mint/50">
+            {{ getEmptyState('allCaughtUp') }}
+          </p>
+        </div>
+      </template>
+      <template v-else>
+        <UIcon name="i-lucide-history" class="size-12 text-forest/20 dark:text-emerald/20 mx-auto" />
+        <div class="space-y-1">
+          <h2 class="stm-heading text-xl text-charcoal dark:text-white">No history yet</h2>
+          <p class="text-sm font-medium text-moss dark:text-mint/50">
+            {{ getEmptyState('noHistory') }}
+          </p>
+        </div>
+      </template>
     </div>
 
     <!-- Puzzle list -->

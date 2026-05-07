@@ -5,56 +5,14 @@ const props = defineProps<{
   total: number
 }>()
 
-const messages: Record<string, string[]> = {
-  starting: [
-    "Waking up the engine, bro...",
-    "Prepping the analysis board...",
-    "Getting things ready for a deep dive...",
-    "Initializing Stockfish WASM threads...",
-    "Clearing the hash tables for a fresh run..."
-  ],
-  parsing: [
-    "Scanning your game history...",
-    "Deconstructing your recent form...",
-    "Reading between the lines of your PGN...",
-    "Extracting those critical games...",
-    "Reconstructing move trees from your history...",
-    "Normalizing PGN metadata...",
-    "Indexing your opening choices..."
-  ],
-  detecting: [
-    "Isolating tactical patterns...",
-    "Identifying where the ELO is leaking...",
-    "Spotting the critical moments...",
-    "Filtering for your biggest blunders...",
-    "Mapping your tactical blind spots...",
-    "Analyzing pawn structure transitions...",
-    "Flagging unusual time-management dips..."
-  ],
-  evaluating: [
-    "Benchmarking your decision making...",
-    "Quantifying those tactical blind spots...",
-    "Running the engine on key positions...",
-    "Synthesizing your performance metrics...",
-    "Calculating centipawn loss across critical lines...",
-    "Simulating better alternatives, bro...",
-    "Searching for the 'Why' behind the 'What'...",
-    "Comparing your moves to the master database..."
-  ],
-  finalizing: [
-    "Calibrating your training plan...",
-    "Wrapping up the insights...",
-    "Finalizing your leak report, bro...",
-    "Polishing the personalized puzzles...",
-    "Synthesizing the road to 2000..."
-  ]
-}
+const { NARRATIVE } = useNarrative()
+const messages = NARRATIVE.loading
 
 const currentMessageIndex = ref(0)
 const internalStage = ref(props.stage)
 const isMessageTransitioning = ref(false)
 
-const currentMessages = computed(() => messages[props.stage] || messages.starting)
+const currentMessages = computed(() => (messages as any)[props.stage] || messages.starting)
 
 const activeMessage = computed(() => {
   const msgs = currentMessages.value

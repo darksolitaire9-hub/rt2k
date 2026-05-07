@@ -86,7 +86,7 @@ export async function analyzePgn(
   const totalInWindow = pool.length
 
   const isCapped = pool.length > gameLimit
-  const capped = isCapped ? pool.slice(-gameLimit) : pool
+  const capped = isCapped ? pool.slice(0, gameLimit) : pool
 
   const games = capped.map(g => g.record)
   const isPartial = isCapped || games.some(g => g.clockPerMove.every((c: number | null) => c === null))
