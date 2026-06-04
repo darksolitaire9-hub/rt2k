@@ -10,7 +10,7 @@
   },
   "scripts": {
     "dev": "nuxt dev",
-    "build": "nuxt build && cp -rL .output/public .output/public_deref && rm -rf .output/public && mv .output/public_deref .output/public",
+    "build": "nuxt build",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "test": "vitest run",
@@ -36,7 +36,6 @@
     "chessground": "^9.2.1",
     "chessops": "^0.15.0",
     "idb-keyval": "^6.2.2",
-    "nuxt": "^4.4.2",
-    "stockfish": "^18.0.7"
+    "nuxt": "^4.4.2"
   }
 }
