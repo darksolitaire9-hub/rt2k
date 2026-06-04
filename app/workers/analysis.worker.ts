@@ -6,7 +6,7 @@ import {
   MID_GAME_LIMIT,
   MAX_GAMES_PER_ANALYSIS_RUN,
 } from '#shared/application/use-cases/AnalyzePgnUseCase'
-import { ChessJsPgnParserAdapter } from '../adapters/pgn/ChessJsPgnParserAdapter'
+import { ChessopsPgnParserAdapter } from '../adapters/pgn/ChessopsPgnParserAdapter'
 import { createStockfishPool } from '../adapters/stockfish/createStockfishPool'
 import type { AnalysisResult } from '#shared/application/use-cases/AnalyzePgnUseCase'
 import {
@@ -39,7 +39,7 @@ type PrewarmTask = {
 
 type QueueTask = AnalyzeTask | PrewarmTask
 
-const parser = new ChessJsPgnParserAdapter()
+const parser = new ChessopsPgnParserAdapter()
 const engine = createStockfishPool({
   workerCount: ENGINE_POOL_SIZE,
   createWorker: () => new Worker(new URL('../adapters/stockfish/stockfishWorker.ts', import.meta.url), { type: 'module' })
