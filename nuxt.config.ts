@@ -3,7 +3,13 @@ export default defineNuxtConfig({
   nitro: {
     preset: process.env.NITRO_PRESET || 'static',
   },
-  modules: ['@nuxt/ui', '@nuxt/test-utils/module'],
+  modules: ['@nuxt/ui', '@nuxt/test-utils/module', '@nuxtjs/seo'],
+  site: {
+    url: 'https://rt2k.pages.dev', // Fallback URL for SEO
+    name: 'rt2k — Master your chess mistakes',
+    description: 'Personalized chess training based on your own games. Analyze your form, detect leaks, and solve custom puzzles to reach 2000 ELO.',
+    defaultLocale: 'en'
+  },
   css: ['~/assets/css/main.css'],
   app: {
     head: {

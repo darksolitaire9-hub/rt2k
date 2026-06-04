@@ -1,0 +1,477 @@
+{
+  "F:\\apr\\sdd\\rt2kv2\\nuxt.config.ts": {
+    "mtime": 1780582576.6464481,
+    "ast_hash": "507fb2ad6f2c7aa2e06cfb2f08e03350",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\package.json": {
+    "mtime": 1780585085.9100792,
+    "ast_hash": "a682b2f2dff239d51044120ad39df08e",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\playwright.config.ts": {
+    "mtime": 1780580861.1594038,
+    "ast_hash": "d7b0dc2f8151bfd7aa4921d1fcbbfdd7",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\tsconfig.json": {
+    "mtime": 1777656874.7676363,
+    "ast_hash": "006cc49fe8e849773f92cf6eea62b568",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\vitest.config.ts": {
+    "mtime": 1777974245.065763,
+    "ast_hash": "65940f2c84647c7b548fe2a246df7d20",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\vue-shims.d.ts": {
+    "mtime": 1778095084.8373282,
+    "ast_hash": "d6b4fcd5a6e88b9f2083c0ae328fe99d",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\app.vue": {
+    "mtime": 1780580861.01849,
+    "ast_hash": "a9b5d7cee1c5f9a54378baede4a539f4",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\adapters\\engine\\StockfishWasmAdapter.test.ts": {
+    "mtime": 1777656874.688554,
+    "ast_hash": "e5d61196cac462394226d38779ca5605",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\adapters\\engine\\StockfishWasmAdapter.ts": {
+    "mtime": 1778151298.8689919,
+    "ast_hash": "c57747b7199f44f177cf54a4bf13d90c",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\adapters\\pgn\\ChessopsPgnParserAdapter.test.ts": {
+    "mtime": 1780585115.4812806,
+    "ast_hash": "6849c01dc2231a420f35528afc17ac99",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\adapters\\pgn\\ChessopsPgnParserAdapter.ts": {
+    "mtime": 1780585626.5686827,
+    "ast_hash": "16aacd643daefb2014fb4c7b5af26a7d",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\adapters\\repository\\IndexedDbAnalysisRepositoryAdapter.test.ts": {
+    "mtime": 1778151298.8689919,
+    "ast_hash": "99f01c532188e8b709a12fe7ec90f183",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\adapters\\repository\\IndexedDbAnalysisRepositoryAdapter.ts": {
+    "mtime": 1780580861.015434,
+    "ast_hash": "e7fb308e702837de5ad2496ead3a6f25",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\adapters\\stockfish\\createStockfishPool.ts": {
+    "mtime": 1778151298.8689919,
+    "ast_hash": "899a954faa66f0a225e5f1d859f2d556",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\adapters\\stockfish\\stockfishWorker.ts": {
+    "mtime": 1778095084.739808,
+    "ast_hash": "76b78b1cae6e7247d95f913e2a5461a1",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\adapters\\stockfish\\workerMessages.ts": {
+    "mtime": 1778151298.8689919,
+    "ast_hash": "c869a4514fdb034e5ed9465cb1f88af2",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\components\\AnalysisLoadingScreen.vue": {
+    "mtime": 1780580861.0297828,
+    "ast_hash": "3e778ce824004fcb253802ba21b1d3c9",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\components\\AnalysisSummaryCard.test.ts": {
+    "mtime": 1777974245.0183945,
+    "ast_hash": "ccf5d9ab1157effb8c018f2cf110f494",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\components\\AnalysisSummaryCard.vue": {
+    "mtime": 1780580861.037802,
+    "ast_hash": "b54605585256f3edc35b9c55b1fd9085",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\components\\LeakCard.vue": {
+    "mtime": 1780580861.0397806,
+    "ast_hash": "ecd4cd30350d3b202c0f4232849b130c",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\components\\PgnUploadCard.vue": {
+    "mtime": 1780580861.056284,
+    "ast_hash": "79e1b8121133d1cb99c0ef44ac1fef26",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\components\\PuzzleBoard.vue": {
+    "mtime": 1777974245.0193925,
+    "ast_hash": "bdd84f12394515ea7a6e908f27a6ea26",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\components\\PuzzleListItem.vue": {
+    "mtime": 1780580861.060414,
+    "ast_hash": "bef1958ac70ef7fcf4120abbb956677f",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\composables\\useAnalysis.ts": {
+    "mtime": 1778151298.8689919,
+    "ast_hash": "95d479a66a5be335dbf356a21fee2db1",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\composables\\useNarrative.ts": {
+    "mtime": 1778151127.1453295,
+    "ast_hash": "ab71fab3558970d67465c93031869f92",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\composables\\usePuzzles.ts": {
+    "mtime": 1778148264.247376,
+    "ast_hash": "f342a90efae6dddeaa4bc6215bc7177c",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\composables\\useRepository.ts": {
+    "mtime": 1778009125.8109415,
+    "ast_hash": "cea825c94f0ce1f1399553c73851cc2b",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\composables\\useTrainingSession.ts": {
+    "mtime": 1778151298.8689919,
+    "ast_hash": "b08e6b9587e301fd36124246a3109784",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\layouts\\default.vue": {
+    "mtime": 1780580861.0764651,
+    "ast_hash": "3d15bdc5c8d75b362b790de2b57f7357",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\pages\\analyze.vue": {
+    "mtime": 1780580861.0887384,
+    "ast_hash": "9e2086518be4c9eb2f29310237098f7c",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\pages\\index.vue": {
+    "mtime": 1780580861.1052363,
+    "ast_hash": "96a7591339edc0c575f2d4fb0bb83fb7",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\pages\\puzzles\\index.vue": {
+    "mtime": 1780580861.1418066,
+    "ast_hash": "26e46f8817496e8747ded2601e651f2b",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\pages\\puzzles\\[id].vue": {
+    "mtime": 1780580861.1321292,
+    "ast_hash": "e8040e0d170e8ccf4f893e19f12c2d7d",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\workers\\analysis.worker.ts": {
+    "mtime": 1780585676.086535,
+    "ast_hash": "f2fe8bb760e7ee9c3add3313a020e2b1",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\workers\\analysis.worker.types.ts": {
+    "mtime": 1778151298.8689919,
+    "ast_hash": "e15bfe4f33f2258e5fc39d9f5790788d",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\app\\workers\\tsconfig.json": {
+    "mtime": 1777656874.73817,
+    "ast_hash": "c08f49f5926432c1c1b1982b4f00d1e8",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\e2e\\basic-navigation.spec.ts": {
+    "mtime": 1780580861.1482644,
+    "ast_hash": "d201e64467af0b022713622701972d26",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\e2e\\puzzle-history.spec.ts": {
+    "mtime": 1780580861.1508672,
+    "ast_hash": "4f008aa19253d13d526589986b2cd80e",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\public\\stockfish\\stockfish-18-lite-single.js": {
+    "mtime": 1778095084.7458107,
+    "ast_hash": "277a883c01898d0459abb05596793d73",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\application\\use-cases\\AnalyzePgnUseCase.test.ts": {
+    "mtime": 1777656874.7610092,
+    "ast_hash": "488b2d03e6dbb88704c031820e395955",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\application\\use-cases\\AnalyzePgnUseCase.ts": {
+    "mtime": 1778148264.2603753,
+    "ast_hash": "3c524be9cfa3a03b02cffd6f00f96f0a",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\config\\leakRules.test.ts": {
+    "mtime": 1778148655.0232458,
+    "ast_hash": "84886722890fe66b8ed25d3e61996b6d",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\config\\leakRules.ts": {
+    "mtime": 1780580861.181155,
+    "ast_hash": "f45a86d5b10492105d4058799b0766b5",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\entities\\AnalysisRun.test.ts": {
+    "mtime": 1777378408.6633785,
+    "ast_hash": "1488279848999f403c98d1aa5d3abc67",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\entities\\AnalysisRun.ts": {
+    "mtime": 1777573708.48842,
+    "ast_hash": "ad009d446acefed561f3aad549e0be62",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\entities\\GameRecord.test.ts": {
+    "mtime": 1777377821.8055387,
+    "ast_hash": "d58567a9b318d37be476d24c5244e828",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\entities\\GameRecord.ts": {
+    "mtime": 1777573708.48842,
+    "ast_hash": "bae535c0ade6657a450f3a01eb678678",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\entities\\Leak.test.ts": {
+    "mtime": 1777378226.4296753,
+    "ast_hash": "5cd34a3fc8c3f554a0c1f0a3b4320845",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\entities\\Leak.ts": {
+    "mtime": 1777573708.4905298,
+    "ast_hash": "dc7ceb9f354fa610ce9f8d567032953d",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\entities\\MistakeRecord.test.ts": {
+    "mtime": 1777378013.2957077,
+    "ast_hash": "efd11998776c204bbbef1dc33be38dc2",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\entities\\MistakeRecord.ts": {
+    "mtime": 1777573708.4905298,
+    "ast_hash": "a1f67691b47026e4d57981fb7c6ec8fe",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\entities\\ParsedGame.ts": {
+    "mtime": 1777408798.987299,
+    "ast_hash": "c5beb9c89316da85614d84fb8e3e8d1a",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\entities\\TrendReport.ts": {
+    "mtime": 1777573708.4905298,
+    "ast_hash": "d245ada303a59bde7cd8f9526656bf72",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\entities\\UserPuzzle.test.ts": {
+    "mtime": 1777378314.4998713,
+    "ast_hash": "6481d8b0292c9198b271048ce88b9480",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\entities\\UserPuzzle.ts": {
+    "mtime": 1777974245.0633307,
+    "ast_hash": "28d9726796943b271f4c60e3cbf8c362",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\ports\\EngineEvaluatorPort.ts": {
+    "mtime": 1777656874.765661,
+    "ast_hash": "966026ac535704d8c55a1ce73816feae",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\ports\\IAnalysisRepositoryPort.ts": {
+    "mtime": 1777974245.0633307,
+    "ast_hash": "1fd402a4728fb17d28f47216652259ac",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\ports\\IEnginePort.ts": {
+    "mtime": 1777656874.76712,
+    "ast_hash": "ad6e2c626e08081c1570e35aab4099ac",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\ports\\IPgnParserPort.ts": {
+    "mtime": 1777657904.15971,
+    "ast_hash": "34de73345af679cbd432f3d4b0571cf7",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\services\\AnalyzeGames.test.ts": {
+    "mtime": 1777408798.987299,
+    "ast_hash": "4e06ff3ff81b2b886a39ff011b2797c3",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\services\\AnalyzeGames.ts": {
+    "mtime": 1777657904.16071,
+    "ast_hash": "3bbd8e71fa1d744056d8d087525b8c64",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\services\\BuildPuzzles.test.ts": {
+    "mtime": 1777573708.4925387,
+    "ast_hash": "5df143ff4368ff8bcd684da3d3881161",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\services\\BuildPuzzles.ts": {
+    "mtime": 1778148264.2633777,
+    "ast_hash": "7763bffd1b64c6f64adec79a6fa0b83a",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\services\\ComputeTrend.ts": {
+    "mtime": 1778095084.8363209,
+    "ast_hash": "82772d913d3f01970732fb1beec46ed2",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\services\\DetectMistakes.test.ts": {
+    "mtime": 1777573708.4935448,
+    "ast_hash": "ea3ef95c86d66baced21e4127dc4d08d",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\services\\DetectMistakes.ts": {
+    "mtime": 1778095084.8373282,
+    "ast_hash": "81d32b020acf6ebff36b1f887d3da7a7",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\services\\NarrativeService.ts": {
+    "mtime": 1778148264.264376,
+    "ast_hash": "2b70f8c03a5f1394c913e7a507d316b2",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\services\\Parser.bench.ts": {
+    "mtime": 1780585707.4289818,
+    "ast_hash": "5acf76886263d2dc76703280846936b3",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\services\\ScoreLeaks.test.ts": {
+    "mtime": 1777714490.4666464,
+    "ast_hash": "452c967f68478971d2168bd5ec044b3c",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\services\\ScoreLeaks.ts": {
+    "mtime": 1777717908.8245082,
+    "ast_hash": "958ea1fab84c4e87f798019c906db8b6",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\value-objects\\GameResult.test.ts": {
+    "mtime": 1777378996.1018858,
+    "ast_hash": "021b24bdfb81996100b6ed4e9399beec",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\value-objects\\GameResult.ts": {
+    "mtime": 1777378996.1030009,
+    "ast_hash": "8a9f919cefd6140bf23ae69eb5619cf0",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\value-objects\\LeakType.test.ts": {
+    "mtime": 1777573708.4955513,
+    "ast_hash": "e9a2e694ad84d206bdfe4390ba69b0cb",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\value-objects\\LeakType.ts": {
+    "mtime": 1777573708.4955513,
+    "ast_hash": "39dfda84a394586a5715d9d548ff7a6f",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\value-objects\\Phase.test.ts": {
+    "mtime": 1777388322.4580753,
+    "ast_hash": "70aca34d9296b17b68b6f8a237c70a7d",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\value-objects\\Phase.ts": {
+    "mtime": 1777388322.4648478,
+    "ast_hash": "f18eb6c039ec440b6f777ea401ebdc31",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\value-objects\\TerminationType.test.ts": {
+    "mtime": 1777397417.8345962,
+    "ast_hash": "62ff353903b195aaddcfbc8e7cd2838f",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\shared\\domain\\value-objects\\TerminationType.ts": {
+    "mtime": 1777397417.8345962,
+    "ast_hash": "2e782d84360d3915854d68e0438d4f7b",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\README.md": {
+    "mtime": 1778157666.734012,
+    "ast_hash": "a2bf9c10f4688ed30fc585a3222b2f50",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\.github\\workflows\\ci.yml": {
+    "mtime": 1780580860.9730713,
+    "ast_hash": "06c36b8aefca5b139538695fd3928de2",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\docs\\constitution.md": {
+    "mtime": 1778009205.686636,
+    "ast_hash": "f85a6da2415d273649df5ad35b4ce8cd",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\docs\\data-model.md": {
+    "mtime": 1777573708.4346042,
+    "ast_hash": "3afa7e03e391afa2a1e8788c7e8c4da8",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\docs\\decisions.md": {
+    "mtime": 1778009205.686636,
+    "ast_hash": "1115be3ace50932fc64a6dd872a2c40d",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\docs\\e2e-fix-todo.md": {
+    "mtime": 1778100552.4413457,
+    "ast_hash": "24b9afb209340a4fc5244034778d99ff",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\docs\\git.md": {
+    "mtime": 1777370810.177696,
+    "ast_hash": "38f4fa00080af8d042e3fe4535500115",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\docs\\glossary.md": {
+    "mtime": 1778009563.6465445,
+    "ast_hash": "803d4d7b04090ff0fc1ce18ec06300c7",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\docs\\plan.md": {
+    "mtime": 1777388172.595307,
+    "ast_hash": "0509b010dde50f9943a9adaff52a640f",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\docs\\quickstart.md": {
+    "mtime": 1778009221.5897665,
+    "ast_hash": "a2300f41fd1cee944b96aa243ca7b597",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\docs\\requirements.md": {
+    "mtime": 1777225079.588022,
+    "ast_hash": "0c1ff8adb5c9489d87d45e33ea3f0042",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\docs\\research.md": {
+    "mtime": 1777370846.1300895,
+    "ast_hash": "16c639e8147f9a61e66734a2c36c26be",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\docs\\session_summary.md": {
+    "mtime": 1777656874.7457705,
+    "ast_hash": "2571c918ea246ac6e5c7c64b0e74fe6c",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\docs\\tasks.md": {
+    "mtime": 1778009221.5897665,
+    "ast_hash": "67da5f5bedf201412cfd6a4443b58601",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\docs\\ui-todo.md": {
+    "mtime": 1778009212.5545628,
+    "ast_hash": "79aeef7a3f1f075250a57573dcd1903d",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\docs\\ui.md": {
+    "mtime": 1777225289.9964366,
+    "ast_hash": "2897bcf83de56a7fdef7e70edfdc40f6",
+    "semantic_hash": ""
+  },
+  "F:\\apr\\sdd\\rt2kv2\\docs\\updated_context.md": {
+    "mtime": 1778009232.9480247,
+    "ast_hash": "8b7364161f6510239c8adbf80e5c1a71",
+    "semantic_hash": ""
+  }
+}

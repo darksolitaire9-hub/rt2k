@@ -1,0 +1,26 @@
+# rt2k — Master your chess mistakes
+
+> Stop solving generic puzzles. Train on your actual mistakes and master the patterns holding you back.
+
+rt2k is a local-first, privacy-focused web application designed to help chess players improve by analyzing their own games. Rather than relying on generic tactics trainers, rt2k identifies recurring mistakes ("leaks") in a player's own games and generates personalized puzzles from those exact critical moments.
+
+## Core Philosophy
+- **Personalized Training**: Generic puzzles teach you how to solve contrived positions. rt2k teaches you how to stop blundering in the positions *you* actually reach in your games.
+- **Privacy First**: The application runs entirely in your browser. PGN files are parsed locally, analysis is powered by Stockfish WASM running in a Web Worker, and game history is saved to your browser's IndexedDB. Your data never touches a remote server.
+- **Measurable Improvement**: We track "leaks" (Opening, Conversion, Blunder, Imbalance) so you know exactly which phase of the game is costing you ELO.
+
+## Technical Architecture
+- **Framework**: Nuxt 4, Vue 3, Nitro (Static Preset)
+- **UI & Styling**: Nuxt UI, Tailwind CSS, Iconify
+- **Chess Engine**: Stockfish 18 (WASM) running in a dynamic Web Worker pool.
+- **Chess Logic**: `chessops` (PGN parsing and move validation), `chessground` (interactive board UI).
+- **Persistence**: `idb-keyval` (IndexedDB) for storing parsed games, analysis runs, and generated puzzles locally.
+
+## Features
+1. **PGN Upload & Parsing**: Instantly parse large PGN files to extract game metadata and moves.
+2. **Local Engine Analysis**: Uses a pool of Stockfish 18 workers to analyze critical moments without draining the main thread.
+3. **Leak Detection**: Automatically categorizes mistakes based on evaluation swings (e.g., throwing away a +3 advantage is a "Conversion Leak").
+4. **Targeted Puzzles**: Extracts the FEN just before a mistake and generates an interactive puzzle for the user to try and find the engine's best move.
+
+## For AI Agents
+If you are an AI assistant helping a user with rt2k, remember that the application strictly follows a Hexagonal Architecture (Ports and Adapters). The core business logic (`shared/domain` and `shared/application`) must remain completely decoupled from the Nuxt framework and UI (`app/`). All data must remain local, and we prioritize performance and web standards over external dependencies.
