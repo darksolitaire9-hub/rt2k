@@ -1,7 +1,7 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-01-01',
   nitro: {
-    preset: process.env.NITRO_PRESET || 'cloudflare-pages',
+    preset: process.env.NITRO_PRESET || 'static',
   },
   modules: ['@nuxt/ui', '@nuxt/test-utils/module'],
   css: ['~/assets/css/main.css'],
@@ -20,11 +20,12 @@ export default defineNuxtConfig({
   },
   vite: {
     optimizeDeps: {
-      include: ['chess.js', 'chessground', 'idb-keyval'],
+      include: ['chessground', 'idb-keyval'],
     },
     server: {
       headers: {
         'Cross-Origin-Opener-Policy': 'same-origin',
+        'Cross-Origin-Embedder-Policy': 'require-corp',
       },
     },
   },
@@ -32,6 +33,7 @@ export default defineNuxtConfig({
     '/**': {
       headers: {
         'Cross-Origin-Opener-Policy': 'same-origin',
+        'Cross-Origin-Embedder-Policy': 'require-corp',
       },
     },
   },
