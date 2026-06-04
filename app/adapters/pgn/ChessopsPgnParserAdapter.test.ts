@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { ChessJsPgnParserAdapter } from './ChessJsPgnParserAdapter'
+import { ChessopsPgnParserAdapter } from './ChessopsPgnParserAdapter'
 import { GameResult } from '#shared/domain/value-objects/GameResult'
 import { TerminationType } from '#shared/domain/value-objects/TerminationType'
 
@@ -78,8 +78,8 @@ const MATE_EVAL_PGN = `[Event "Rapid"]
 
 1. b4 { [%eval #5] } 1... b5 { [%eval -#3] } 1-0`
 
-describe('ChessJsPgnParserAdapter', () => {
-  const adapter = new ChessJsPgnParserAdapter()
+describe('ChessopsPgnParserAdapter', () => {
+  const adapter = new ChessopsPgnParserAdapter()
 
   it('returns empty array for empty PGN', () => {
     expect(adapter.parse('', PLAYER)).toEqual([])

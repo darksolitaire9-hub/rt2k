@@ -1,4 +1,7 @@
-import { Chess } from 'chess.js'
+import { parsePgn, parseComment } from 'chessops/pgn'
+import { Chess } from 'chessops/chess'
+import { makeFen } from 'chessops/fen'
+import { parseSan } from 'chessops/san'
 import type { IPgnParserPort, PgnParserOptions } from '#shared/domain/ports/IPgnParserPort'
 import type { ParsedGame, ParsedMove } from '#shared/domain/entities/ParsedGame'
 import type { GameRecord } from '#shared/domain/entities/GameRecord'
@@ -30,20 +33,44 @@ function splitPgnOptimized(pgn: string): string[] {
   return games
 }
 
-function parseEval(comment: string): number | null {
-  if (!comment) return null
-  if (comment.includes('[%eval -#')) return -9999
-  if (comment.includes('[%eval #')) return 9999
-  const match = comment.match(/\[%eval\s+(-?[\d.]+)/)
-  if (!match) return null
-  return Math.round(parseFloat(match[1]!) * 100)
+function parseEvalFromComments(comments: string[] | undefined): number | null {
+  if (!comments || comments.length === 0) return null
+  for (const c of comments) {
+    const parsed = parseComment(c)
+    if (parsed.eval) {
+      if (parsed.eval.mate !== undefined) {
+        return parsed.eval.mate > 0 ? 9999 : -9999
+      }
+      if (parsed.eval.hpawns !== undefined) {
+        return Math.round(parsed.eval.hpawns * 100)
+      }
+    }
+    // Simple regex fallback
+    const evalMatch = c.match(/\[%eval\s+(-?[\d.]+)/)
+    if (evalMatch) return Math.round(parseFloat(evalMatch[1]!) * 100)
+    const mateMatch = c.match(/\[%eval\s+#(-?\d+)/)
+    if (mateMatch) return parseInt(mateMatch[1]!) > 0 ? 9999 : -9999
+    const mateMatch2 = c.match(/\[%eval\s+-#(\d+)/)
+    if (mateMatch2) return -9999
+  }
+  return null
 }
 
-function parseClk(comment: string): number | null {
-  if (!comment) return null
-  const match = comment.match(/\[%clk\s+(\d+):(\d+):(\d+)/)
-  if (!match) return null
-  return parseInt(match[1]!) * 3600 + parseInt(match[2]!) * 60 + parseInt(match[3]!)
+function parseClkFromComments(comments: string[] | undefined): number | null {
+  if (!comments || comments.length === 0) return null
+  for (const c of comments) {
+    const parsed = parseComment(c)
+    if (parsed.clk) {
+      const match = parsed.clk.match(/(\d+):(\d+):(\d+)/)
+      if (match) {
+        return parseInt(match[1]!) * 3600 + parseInt(match[2]!) * 60 + parseInt(match[3]!)
+      }
+    }
+    // Simple regex fallback
+    const clkMatch = c.match(/\[%clk\s+(\d+):(\d+):(\d+)/)
+    if (clkMatch) return parseInt(clkMatch[1]!) * 3600 + parseInt(clkMatch[2]!) * 60 + parseInt(clkMatch[3]!)
+  }
+  return null
 }
 
 function mapResult(resultHeader: string, color: 'white' | 'black'): GameResult {
@@ -79,7 +106,7 @@ function computeConversionFail(moves: ParsedMove[], color: 'white' | 'black', re
     .some(m => m.evalBefore !== null && sign * m.evalBefore >= BLUNDER_THRESHOLD_CP)
 }
 
-export class ChessJsPgnParserAdapter implements IPgnParserPort {
+export class ChessopsPgnParserAdapter implements IPgnParserPort {
   parse(pgn: string, playerUsername: string, options?: PgnParserOptions): ParsedGame[] {
     const rawGames = splitPgnOptimized(pgn)
     const lc = playerUsername.toLowerCase().trim()
@@ -88,46 +115,44 @@ export class ChessJsPgnParserAdapter implements IPgnParserPort {
     
     const results: ParsedGame[] = []
     let outOfDateCount = 0
-    const MAX_OUT_OF_DATE_BUFFER = 5 // Allow some wiggle room for non-chronological PGNs
+    const MAX_OUT_OF_DATE_BUFFER = 5
     
-    // Process in reverse (most recent first) to satisfy limit early
     for (let i = rawGames.length - 1; i >= 0; i--) {
       if (limit && results.length >= limit) break
       
       const gamePgn = rawGames[i]!
       const headers = this.parseHeaders(gamePgn)
       
-      // Filter by username
-      const white = (headers['White'] || '').toLowerCase().trim()
-      const black = (headers['Black'] || '').toLowerCase().trim()
+      const white = (headers.get('White') || '').toLowerCase().trim()
+      const black = (headers.get('Black') || '').toLowerCase().trim()
       if (white !== lc && black !== lc) continue
       
-      // Filter by date if provided
       if (since) {
-        const dateStr = (headers['Date'] || '').replace(/\./g, '-')
+        const dateStr = (headers.get('Date') || '').replace(/\./g, '-')
         const gameDate = new Date(dateStr)
         if (!isNaN(gameDate.getTime()) && gameDate < since) {
           outOfDateCount++
-          if (outOfDateCount > MAX_OUT_OF_DATE_BUFFER) {
-             // Stop if we consistently see old games
-             break
-          }
+          if (outOfDateCount > MAX_OUT_OF_DATE_BUFFER) break
           continue 
         } else {
           outOfDateCount = 0
         }
       }
       
-      const parsed = this.parseOneWithHeaders(gamePgn, lc, headers)
+      const parsed = this.parseOneWithRawPgn(gamePgn, lc)
       if (parsed) results.push(parsed)
     }
     
     return results
   }
 
-  private parseOneWithHeaders(gamePgn: string, playerUsernameLc: string, headers: Record<string, string>): ParsedGame | null {
-    const white = (headers['White'] || '').toLowerCase().trim()
-    const black = (headers['Black'] || '').toLowerCase().trim()
+  private parseOneWithRawPgn(gamePgn: string, playerUsernameLc: string): ParsedGame | null {
+    const games = parsePgn(gamePgn)
+    if (games.length === 0) return null
+    const game = games[0]!
+
+    const white = (game.headers.get('White') || '').toLowerCase().trim()
+    const black = (game.headers.get('Black') || '').toLowerCase().trim()
     
     const color: 'white' | 'black' | null =
       white === playerUsernameLc ? 'white' :
@@ -135,46 +160,55 @@ export class ChessJsPgnParserAdapter implements IPgnParserPort {
       
     if (!color) return null
 
-    const chess = new Chess()
-    const sanitizedPgn = gamePgn.replace(/\}\s*\{/g, ' ')
-
-    try {
-      chess.loadPgn(sanitizedPgn)
-    } catch (e) {
-      return null
+    const moves: ParsedMove[] = []
+    const pos = Chess.default()
+    
+    let lastEval = parseEvalFromComments(game.comments)
+    
+    let halfmoveCount = 0
+    const mainline = game.moves.mainline()
+    for (const node of mainline) {
+      const fenBefore = makeFen(pos.toSetup())
+      
+      const evalAfter = parseEvalFromComments(node.comments)
+      const timeRemaining = parseClkFromComments(node.comments)
+      
+      moves.push({
+        moveNumber: Math.floor(halfmoveCount / 2) + 1,
+        san: node.san,
+        fenBefore,
+        evalBefore: lastEval,
+        evalAfter,
+        timeRemainingSeconds: timeRemaining,
+      })
+      
+      const move = parseSan(pos, node.san)
+      if (move) {
+        pos.play(move)
+      }
+      lastEval = evalAfter
+      halfmoveCount++
     }
 
-    const commentMap = new Map(chess.getComments().map(c => [c.fen, c.comment]))
-    const history = chess.history({ verbose: true })
-
-    const moves: ParsedMove[] = history.map((move, i) => ({
-      moveNumber: Math.floor(i / 2) + 1,
-      san: move.san,
-      fenBefore: move.before,
-      evalBefore: parseEval(commentMap.get(move.before) ?? ''),
-      evalAfter: parseEval(commentMap.get(move.after) ?? ''),
-      timeRemainingSeconds: parseClk(commentMap.get(move.after) ?? ''),
-    }))
-
-    const resultHeader = headers['Result'] ?? '*'
+    const resultHeader = game.headers.get('Result') ?? '*'
     const result = mapResult(resultHeader, color)
-    const termination = mapTermination(headers['Termination'] ?? '')
-    const siteHeader = headers['Site'] ?? ''
+    const termination = mapTermination(game.headers.get('Termination') ?? '')
+    const siteHeader = game.headers.get('Site') ?? ''
     const gameId = siteHeader.split('/').pop() || `game-${Math.random().toString(36).slice(2)}`
 
     const record: GameRecord = {
       gameId,
-      date: headers['Date'] ?? '',
-      oppName: color === 'white' ? (headers['Black'] ?? 'Unknown') : (headers['White'] ?? 'Unknown'),
+      date: game.headers.get('Date') ?? '',
+      oppName: color === 'white' ? (game.headers.get('Black') ?? 'Unknown') : (game.headers.get('White') ?? 'Unknown'),
       color,
       result,
       termination,
-      openingName: headers['Opening'] ?? '',
-      eco: headers['ECO'] ?? '',
-      myElo: parseInt(color === 'white' ? (headers['WhiteElo'] ?? '0') : (headers['BlackElo'] ?? '0')),
-      oppElo: parseInt(color === 'white' ? (headers['BlackElo'] ?? '0') : (headers['WhiteElo'] ?? '0')),
-      timeControl: headers['TimeControl'] ?? '',
-      moveCount: Math.ceil(history.length / 2),
+      openingName: game.headers.get('Opening') ?? '',
+      eco: game.headers.get('ECO') ?? '',
+      myElo: parseInt(color === 'white' ? (game.headers.get('WhiteElo') ?? '0') : (game.headers.get('BlackElo') ?? '0')),
+      oppElo: parseInt(color === 'white' ? (game.headers.get('BlackElo') ?? '0') : (game.headers.get('WhiteElo') ?? '0')),
+      timeControl: game.headers.get('TimeControl') ?? '',
+      moveCount: Math.ceil(halfmoveCount / 2),
       timeLoss: termination === TerminationType.Time && result !== GameResult.Win,
       openingFail: computeOpeningFail(moves, color),
       conversionFail: computeConversionFail(moves, color, result),
@@ -184,11 +218,11 @@ export class ChessJsPgnParserAdapter implements IPgnParserPort {
     return { record, moves }
   }
 
-  private parseHeaders(pgn: string): Record<string, string> {
-    const headers: Record<string, string> = {}
+  private parseHeaders(pgn: string): Map<string, string> {
+    const headers = new Map<string, string>()
     const matches = pgn.matchAll(/\[(\w+)\s+"([^"]+)"\]/g)
     for (const match of matches) {
-      headers[match[1]!] = match[2]!
+      headers.set(match[1]!, match[2]!)
     }
     return headers
   }
