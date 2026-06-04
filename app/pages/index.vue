@@ -31,7 +31,7 @@ useSchemaOrg([
         <p class="text-xl md:text-2xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
           rt2k analyzes your actual games using Stockfish 18, detects your personal "leaks", and generates targeted puzzles to help you master the patterns holding you back.
         </p>
-        <div class="flex justify-center gap-4 pt-4">
+        <div class="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4">
           <UButton
             id="start-analyzing-btn"
             to="/analyze"
@@ -39,6 +39,7 @@ useSchemaOrg([
             color="primary"
             variant="solid"
             aria-label="Start analyzing your games"
+            class="w-full sm:w-auto flex justify-center"
           >
             Start Analyzing Now
           </UButton>
@@ -49,6 +50,7 @@ useSchemaOrg([
             color="gray"
             variant="ghost"
             aria-label="Learn more about rt2k features"
+            class="w-full sm:w-auto flex justify-center"
           >
             Learn More
           </UButton>
