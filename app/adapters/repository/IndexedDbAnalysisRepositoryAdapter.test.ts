@@ -18,6 +18,9 @@ vi.mock('idb-keyval', () => ({
   }),
   del: vi.fn(async (key: string) => {
     delete mockStore[key]
+  }),
+  clear: vi.fn(async () => {
+    for (const key in mockStore) delete mockStore[key]
   })
 }))
 
@@ -166,5 +169,30 @@ describe('IndexedDbAnalysisRepositoryAdapter', () => {
     
     await adapter.removeFromPuzzleSyncQueue('p1')
     expect(await adapter.getPuzzleSyncQueue()).toEqual(['p2'])
+  })
+
+  it('getAllPuzzles returns all puzzles from the global store', async () => {
+    const adapter = new IndexedDbAnalysisRepositoryAdapter()
+    await adapter.save(RUN, [], [], [PUZZLE])
+    const PUZZLE_2 = { ...PUZZLE, id: 'p2' }
+    await adapter.save({ ...RUN, id: 'run-2' }, [], [], [PUZZLE_2])
+    
+    const puzzles = await adapter.getAllPuzzles()
+    expect(puzzles).toHaveLength(2)
+    expect(puzzles.some(p => p.id === 'p1')).toBe(true)
+    expect(puzzles.some(p => p.id === 'p2')).toBe(true)
+  })
+
+  it('clearAllData removes all data from the mock store via idb-keyval', async () => {
+    const adapter = new IndexedDbAnalysisRepositoryAdapter()
+    await adapter.save(RUN, [], [], [PUZZLE])
+    
+    expect(mockStore['rt2k-analysis-run-1']).toBeDefined()
+    expect(mockStore['rt2k-puzzles']).toBeDefined()
+
+    await adapter.clearAllData()
+    
+    // idb-keyval mock needs 'clear' mapped, let's just test that the store is empty
+    expect(Object.keys(mockStore)).toHaveLength(0)
   })
 })

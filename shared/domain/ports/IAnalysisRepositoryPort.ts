@@ -9,4 +9,6 @@ export interface IAnalysisRepositoryPort {
   listByUser(userId: string): Promise<AnalysisRun[]>
   getLatestAnalysis(): Promise<{ run: AnalysisRun; games: GameRecord[]; leaks: Leak[]; puzzles: UserPuzzle[] } | null>
   updatePuzzleSolved(id: string): Promise<void>
+  getAllPuzzles(): Promise<UserPuzzle[]>
+  clearAllData(): Promise<void>
 }

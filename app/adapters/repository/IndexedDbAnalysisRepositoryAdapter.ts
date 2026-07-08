@@ -1,4 +1,4 @@
-import { get, set, del } from 'idb-keyval'
+import { get, set, del, clear } from 'idb-keyval'
 import type { IAnalysisRepositoryPort } from '#shared/domain/ports/IAnalysisRepositoryPort'
 import type { AnalysisRun } from '#shared/domain/entities/AnalysisRun'
 import type { GameRecord } from '#shared/domain/entities/GameRecord'
@@ -127,6 +127,15 @@ export class IndexedDbAnalysisRepositoryAdapter implements IAnalysisRepositoryPo
     const index = (await get<string[]>(ANALYSIS_INDEX_KEY)) || []
     const newIndex = index.filter(i => i !== id)
     await set(ANALYSIS_INDEX_KEY, newIndex)
+  }
+
+  async getAllPuzzles(): Promise<UserPuzzle[]> {
+    const allPuzzlesMap = (await get<Record<string, UserPuzzle>>(PUZZLES_KEY)) || {}
+    return Object.values(allPuzzlesMap)
+  }
+
+  async clearAllData(): Promise<void> {
+    await clear()
   }
 
   // Sync Queue Methods
