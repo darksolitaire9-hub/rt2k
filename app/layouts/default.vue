@@ -32,8 +32,31 @@ const toggleColorMode = () => {
             >
               Puzzles
             </NuxtLink>
+            <NuxtLink 
+              to="/analyses" 
+              class="text-sm font-medium transition-colors"
+              :class="route.path.startsWith('/analyses') ? 'text-forest dark:text-emerald' : 'text-moss dark:text-mint/60'"
+            >
+              Analyses
+            </NuxtLink>
+            <NuxtLink 
+              to="/settings" 
+              class="text-sm font-medium transition-colors"
+              :class="route.path.startsWith('/settings') ? 'text-forest dark:text-emerald' : 'text-moss dark:text-mint/60'"
+            >
+              Settings
+            </NuxtLink>
           </nav>
 
+          <UButton
+            icon="i-lucide-github"
+            to="https://github.com/darksolitaire9-hub/rt2k"
+            target="_blank"
+            variant="ghost"
+            color="neutral"
+            size="sm"
+            aria-label="GitHub Repository"
+          />
           <UButton
             icon="i-lucide-sun-moon"
             variant="ghost"
