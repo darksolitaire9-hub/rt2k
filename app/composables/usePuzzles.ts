@@ -1,14 +1,15 @@
-import { useAnalysis } from './useAnalysis'
+import { useRepository } from './useRepository'
+import type { UserPuzzle } from '#shared/domain/entities/UserPuzzle'
+
+const allPuzzles = ref<UserPuzzle[]>([])
 
 export function usePuzzles() {
-  const { result, markPuzzleSolved } = useAnalysis()
-
   const BATCH_SIZE = 20
 
-  // The source of truth is always the live analysis result.
-  const allPuzzles = computed(() => {
-    return result.value?.puzzles ?? []
-  })
+  async function hydratePuzzles() {
+    const repo = useRepository()
+    allPuzzles.value = await repo.getAllPuzzles()
+  }
 
   // Derived state: Slotted specifically for the "To Do" list
   const unsolvedPuzzles = computed(() => {
@@ -30,8 +31,14 @@ export function usePuzzles() {
     return allPuzzles.value.find(p => p.id === id) ?? null
   }
 
-  function markSolved(id: string) {
-    markPuzzleSolved(id)
+  async function markSolved(id: string) {
+    // Optimistic UI update
+    const p = findById(id)
+    if (p) p.solved = true
+
+    // Persist
+    const repo = useRepository()
+    await repo.updatePuzzleSolved(id)
   }
 
   return {
@@ -41,5 +48,6 @@ export function usePuzzles() {
     solvedPuzzles,
     findById,
     markSolved,
+    hydratePuzzles,
   }
 }

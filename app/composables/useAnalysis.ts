@@ -1,6 +1,7 @@
 import type { AnalysisResult } from '#shared/application/use-cases/AnalyzePgnUseCase'
 import type { WorkerRequest, WorkerResponse } from '../workers/analysis.worker.types'
 import { useRepository } from './useRepository'
+import { usePuzzles } from './usePuzzles'
 
 // --- Module-level singletons for persistence across routes ---
 let worker: Worker | null = null
@@ -49,7 +50,9 @@ function handleMessage(event: MessageEvent<WorkerResponse>): void {
       // Save if background result
       if (msg.tier !== 'burst') {
         const repo = useRepository()
-        repo.save(newResult.run, newResult.games, newResult.leaks, newResult.puzzles)
+        repo.save(newResult.run, newResult.games, newResult.leaks, newResult.puzzles).then(() => {
+          usePuzzles().hydratePuzzles()
+        })
       }
       break
     }
@@ -59,7 +62,9 @@ function handleMessage(event: MessageEvent<WorkerResponse>): void {
       backgroundRunning.value = false
       if (result.value) {
         const repo = useRepository()
-        repo.save(result.value.run, result.value.games, result.value.leaks, result.value.puzzles)
+        repo.save(result.value.run, result.value.games, result.value.leaks, result.value.puzzles).then(() => {
+          usePuzzles().hydratePuzzles()
+        })
       }
       break
 
@@ -220,18 +225,11 @@ export function useAnalysis() {
     }
   }
 
-  function markPuzzleSolved(id: string): void {
-    if (!result.value) return
-    result.value = {
-      ...result.value,
-      puzzles: result.value.puzzles.map(p =>
-        p.id === id ? { ...p, solved: true } : p
-      ),
-    }
-    
-    // Persist immediately
+  async function clearData(): Promise<void> {
+    clear() // Stops worker and resets UI
     const repo = useRepository()
-    repo.updatePuzzleSolved(id)
+    await repo.clearAllData()
+    await usePuzzles().hydratePuzzles()
   }
 
   return {
@@ -258,7 +256,7 @@ export function useAnalysis() {
     preLoad,
     preAnalyze,
     clear,
-    markPuzzleSolved,
+    clearData,
     hydrate,
   }
 }
