@@ -33,7 +33,7 @@ rt2k's core analysis engine works beautifully, but the app suffers from amnesia.
 - [x] Task 8: Add navigation links in `app.vue` (or `layouts/default.vue`) to reach the new Analyses and Settings pages.
 
 ### Checkpoint: Complete
-- [ ] End-to-end flow works: Upload PGN -> Generate Puzzles -> View Puzzles -> Upload another PGN -> View combined Puzzles.
+- [x] End-to-end flow works: Upload PGN -> Generate Puzzles -> View Puzzles -> Upload another PGN -> View combined Puzzles.
 - [ ] "My Analyses" page correctly lists both runs.
 - [ ] "Clear Data" successfully resets the app to a pristine state.
 

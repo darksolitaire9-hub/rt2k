@@ -65,11 +65,9 @@
 **Description:** Ensure that when a new analysis completes, or the app initializes, the global puzzle list is hydrated.
 
 **Acceptance criteria:**
-- [ ] `useAnalysis.ts` calls `hydratePuzzles()` (or repository save triggers it) when `result` is saved
-- [ ] `app.vue` or layout calls `hydratePuzzles()` on mount
-
-**Verification:**
-- [ ] New puzzles appear in the UI after a successful analysis
+- [ ] `useAnalysis.ts` calls `hydratePuzzles()` (or repository save triggers it) when
+### Checkpoint: Complete
+- [x] End-to-end flow works: Upload PGN -> Generate Puzzles -> View Puzzles -> Upload another PGN -> View combined Puzzles. appear in the UI after a successful analysis
 
 **Dependencies:** Task 3
 
