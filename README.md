@@ -8,7 +8,6 @@ This project is a personal training ground that:
 
 - Analyzes my own games with Stockfish
 - Turns my recurring mistakes into tailored puzzles
-- Experiments with different LLMs to generate guidance and explanations
 
 It started as “I have a problem in my chess” and turned into “what if I just built the tool I wish existed?”
 
