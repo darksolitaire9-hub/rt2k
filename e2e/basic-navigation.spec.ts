@@ -23,4 +23,11 @@ test('basic navigation and smoke test', async ({ page }) => {
   // Verify the navigation active state pill is applied correctly
   const analyzeLink = page.getByRole('link', { name: 'Analyze' }).first();
   await expect(analyzeLink).toHaveClass(/bg-forest\/10/);
+
+  // Click the main logo to go back to landing page
+  await page.getByRole('link', { name: 'rt2k' }).click();
+  
+  // Verify we are back on the landing page
+  await expect(page).toHaveURL('http://localhost:3000/');
+  await expect(page.getByRole('heading', { name: /Stop solving generic puzzles/i })).toBeVisible();
 });

@@ -11,13 +11,13 @@ const toggleColorMode = () => {
   <div class="min-h-screen flex flex-col transition-colors duration-300">
     <!-- Minimal STM Header -->
     <header class="sticky top-0 z-20 bg-sand/80 dark:bg-midnight/80 backdrop-blur-lg">
-      <div class="max-w-xl mx-auto px-6 md:px-8 h-16 flex items-center justify-between">
-        <NuxtLink to="/analyze" class="font-display font-bold text-xl tracking-tight text-forest dark:text-emerald">
+      <div class="max-w-7xl mx-auto px-6 md:px-8 h-16 flex items-center justify-between">
+        <NuxtLink to="/" class="font-display font-bold text-xl tracking-tight text-forest dark:text-emerald">
           rt2k
         </NuxtLink>
         
-        <div class="flex items-center gap-4">
-          <nav class="flex items-center gap-1">
+        <div class="flex items-center gap-2 sm:gap-4 overflow-hidden">
+          <nav class="flex items-center gap-1 overflow-x-auto no-scrollbar whitespace-nowrap pb-1 -mb-1">
             <NuxtLink 
               to="/analyze" 
               class="px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200"
@@ -69,13 +69,13 @@ const toggleColorMode = () => {
       </div>
     </header>
 
-    <main class="flex-1 max-w-xl mx-auto w-full px-6 md:px-8 py-8">
+    <main class="flex-1 max-w-7xl mx-auto w-full px-6 md:px-8 py-8 overflow-x-hidden">
       <slot />
     </main>
 
     <!-- Global Action Thumb Zone (Placeholder for future navigation/actions) -->
     <div class="fixed bottom-0 left-0 right-0 p-6 pointer-events-none z-30 flex justify-center">
-      <div class="max-w-xl w-full flex justify-end pointer-events-auto">
+      <div class="max-w-7xl w-full flex justify-end pointer-events-auto">
         <!-- Persistent buttons could go here -->
       </div>
     </div>
