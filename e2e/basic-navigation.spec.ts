@@ -7,6 +7,10 @@ test('basic navigation and smoke test', async ({ page }) => {
   // Check for the main heading on the landing page
   await expect(page.getByRole('heading', { name: /Stop solving generic puzzles/i })).toBeVisible();
   
+  // Verify the new PuzzleBoard mock badge is visible
+  const leakBadge = page.locator('text=Leak Detected');
+  await expect(leakBadge).toBeVisible();
+
   // Click the CTA to go to analyze
   await page.locator('#start-analyzing-btn').click();
 
@@ -15,4 +19,8 @@ test('basic navigation and smoke test', async ({ page }) => {
   
   // Check for the main heading on the analyze page
   await expect(page.getByRole('heading', { name: /Analyze your form/i })).toBeVisible();
+
+  // Verify the navigation active state pill is applied correctly
+  const analyzeLink = page.getByRole('link', { name: 'Analyze' }).first();
+  await expect(analyzeLink).toHaveClass(/bg-forest\/10/);
 });

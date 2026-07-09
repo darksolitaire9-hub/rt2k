@@ -17,32 +17,32 @@ const toggleColorMode = () => {
         </NuxtLink>
         
         <div class="flex items-center gap-4">
-          <nav class="flex items-center gap-2">
+          <nav class="flex items-center gap-1">
             <NuxtLink 
               to="/analyze" 
-              class="text-sm font-medium transition-colors"
-              :class="route.path === '/analyze' ? 'text-forest dark:text-emerald' : 'text-moss dark:text-mint/60'"
+              class="px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200"
+              :class="route.path === '/analyze' ? 'bg-forest/10 text-forest dark:bg-emerald/10 dark:text-emerald' : 'text-moss dark:text-mint/60 hover:bg-forest/5 dark:hover:bg-emerald/5'"
             >
               Analyze
             </NuxtLink>
             <NuxtLink 
               to="/puzzles" 
-              class="text-sm font-medium transition-colors"
-              :class="route.path.startsWith('/puzzles') ? 'text-forest dark:text-emerald' : 'text-moss dark:text-mint/60'"
+              class="px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200"
+              :class="route.path.startsWith('/puzzles') ? 'bg-forest/10 text-forest dark:bg-emerald/10 dark:text-emerald' : 'text-moss dark:text-mint/60 hover:bg-forest/5 dark:hover:bg-emerald/5'"
             >
               Puzzles
             </NuxtLink>
             <NuxtLink 
               to="/analyses" 
-              class="text-sm font-medium transition-colors"
-              :class="route.path.startsWith('/analyses') ? 'text-forest dark:text-emerald' : 'text-moss dark:text-mint/60'"
+              class="px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200"
+              :class="route.path.startsWith('/analyses') ? 'bg-forest/10 text-forest dark:bg-emerald/10 dark:text-emerald' : 'text-moss dark:text-mint/60 hover:bg-forest/5 dark:hover:bg-emerald/5'"
             >
               Analyses
             </NuxtLink>
             <NuxtLink 
               to="/settings" 
-              class="text-sm font-medium transition-colors"
-              :class="route.path.startsWith('/settings') ? 'text-forest dark:text-emerald' : 'text-moss dark:text-mint/60'"
+              class="px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200"
+              :class="route.path.startsWith('/settings') ? 'bg-forest/10 text-forest dark:bg-emerald/10 dark:text-emerald' : 'text-moss dark:text-mint/60 hover:bg-forest/5 dark:hover:bg-emerald/5'"
             >
               Settings
             </NuxtLink>

@@ -18,42 +18,68 @@ useSchemaOrg([
     name: 'rt2k - Personalized Chess Training'
   })
 ])
+
+const mockPuzzle = {
+  id: 'mock-1',
+  sourceGameId: 'demo',
+  sourceMoveNumber: 24,
+  fen: 'r1bq1rk1/pppp1ppp/2n2n2/2b1p3/2B1P3/2N2N2/PPPP1PPP/R1BQ1RK1 w - - 0 1',
+  solution: 'c4f7',
+  clockAtMoment: null,
+  leakType: 'Opening'
+}
 </script>
 
 <template>
-  <main class="flex flex-col items-center justify-center min-h-screen p-4 text-center">
-    <UContainer class="max-w-4xl mx-auto space-y-12">
+  <main class="flex flex-col items-center justify-center min-h-screen p-4 text-center md:text-left">
+    <UContainer class="max-w-5xl mx-auto space-y-24">
       <!-- Hero Section -->
-      <section class="space-y-6 pt-20">
-        <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-          Stop solving <span class="text-primary-500">generic</span> puzzles.
-        </h1>
-        <p class="text-xl md:text-2xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-          rt2k analyzes your actual games using Stockfish 18, detects your personal "leaks", and generates targeted puzzles to help you master the patterns holding you back.
-        </p>
-        <div class="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4">
-          <UButton
-            id="start-analyzing-btn"
-            to="/analyze"
-            size="xl"
-            color="primary"
-            variant="solid"
-            aria-label="Start analyzing your games"
-            class="w-full sm:w-auto flex justify-center"
-          >
-            Start Analyzing Now
-          </UButton>
-          <UButton
-            id="view-features-btn"
-            href="#features"
-            size="xl"
-            color="gray"
-            variant="ghost"
-            aria-label="Learn more about rt2k features"
-            class="w-full sm:w-auto flex justify-center"
-          >
-            Learn More
-          </UButton>
+      <section class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center pt-16 md:pt-24">
+        <div class="space-y-8">
+          <h1 class="text-5xl md:text-6xl lg:text-7xl stm-heading text-charcoal dark:text-sand">
+            Stop solving <span class="text-forest dark:text-emerald">generic</span> puzzles.
+          </h1>
+          <p class="text-xl text-moss dark:text-sage max-w-prose leading-relaxed">
+            rt2k analyzes your actual games using Stockfish 18, detects your personal "leaks", and generates targeted puzzles to help you master the patterns holding you back.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4 pt-4">
+            <UButton
+              id="start-analyzing-btn"
+              to="/analyze"
+              size="xl"
+              color="primary"
+              variant="solid"
+              aria-label="Start analyzing your games"
+              class="w-full sm:w-auto flex justify-center shadow-[var(--shadow-stm)] dark:shadow-[var(--shadow-stm-dark)] font-display tracking-wide"
+            >
+              Start Analyzing Now
+            </UButton>
+            <UButton
+              id="view-features-btn"
+              href="#features"
+              size="xl"
+              color="gray"
+              variant="ghost"
+              aria-label="Learn more about rt2k features"
+              class="w-full sm:w-auto flex justify-center font-display"
+            >
+              Learn More
+            </UButton>
+          </div>
+        </div>
+
+        <div class="relative w-full max-w-md mx-auto lg:max-w-full lg:ml-auto">
+          <!-- Decorative glow -->
+          <div class="absolute -inset-4 bg-gradient-to-tr from-forest/20 to-mint/20 dark:from-emerald/20 dark:to-mint/10 rounded-[2rem] blur-2xl opacity-50 -z-10"></div>
+          <div class="stm-card p-4 md:p-6 transform rotate-1 md:rotate-2 hover:rotate-0 transition-transform duration-500 relative">
+             <div class="pointer-events-auto">
+               <PuzzleBoard :puzzle="mockPuzzle" />
+             </div>
+             <!-- Decorative pills -->
+             <div class="absolute top-4 -right-2 md:-right-6 bg-white dark:bg-midnight shadow-lg rounded-full px-4 py-2 text-xs font-bold text-forest dark:text-emerald flex items-center gap-2 border border-gray-100 dark:border-forest/20 z-10 pointer-events-none">
+               <UIcon name="lucide:target" class="w-4 h-4" /> Leak Detected
+             </div>
+          </div>
         </div>
       </section>
 
