@@ -60,32 +60,34 @@ async function onSolved() {
     </div>
 
     <template v-else>
-      <PuzzleBoard :puzzle="puzzle" @solved="onSolved" />
+      <div class="w-full max-w-[min(100%,calc(100vh-24rem))] mx-auto space-y-6">
+        <PuzzleBoard :puzzle="puzzle" @solved="onSolved" />
 
-      <!-- Prev / Next -->
-      <div class="flex gap-3">
-        <button
-          class="flex-1 min-h-[48px] rounded-[--radius-stm] border-2 font-bold uppercase tracking-wider text-sm transition-colors flex items-center justify-center gap-2"
-          :class="prevId
-            ? 'border-forest dark:border-emerald text-forest dark:text-emerald hover:bg-sage/20 dark:hover:bg-emerald/5'
-            : 'border-gray-200 dark:border-forest/10 text-gray-300 dark:text-white/20 cursor-not-allowed'"
-          :disabled="!prevId"
-          @click="prevId && navigateTo(`/puzzles/${prevId}`)"
-        >
-          <UIcon name="i-lucide-arrow-left" class="size-4" />
-          Prev
-        </button>
-        <button
-          class="flex-1 min-h-[48px] rounded-[--radius-stm] border-2 font-bold uppercase tracking-wider text-sm transition-colors flex items-center justify-center gap-2"
-          :class="nextId
-            ? 'border-forest dark:border-emerald text-forest dark:text-emerald hover:bg-sage/20 dark:hover:bg-emerald/5'
-            : 'border-gray-200 dark:border-forest/10 text-gray-300 dark:text-white/20 cursor-not-allowed'"
-          :disabled="!nextId"
-          @click="nextId && navigateTo(`/puzzles/${nextId}`)"
-        >
-          Next
-          <UIcon name="i-lucide-arrow-right" class="size-4" />
-        </button>
+        <!-- Prev / Next -->
+        <div class="flex gap-3">
+          <button
+            class="flex-1 min-h-[48px] rounded-[--radius-stm] border-2 font-bold uppercase tracking-wider text-sm transition-colors flex items-center justify-center gap-2"
+            :class="prevId
+              ? 'border-forest dark:border-emerald text-forest dark:text-emerald hover:bg-sage/20 dark:hover:bg-emerald/5'
+              : 'border-gray-200 dark:border-forest/10 text-gray-300 dark:text-white/20 cursor-not-allowed'"
+            :disabled="!prevId"
+            @click="prevId && navigateTo(`/puzzles/${prevId}`)"
+          >
+            <UIcon name="i-lucide-arrow-left" class="size-4" />
+            Prev
+          </button>
+          <button
+            class="flex-1 min-h-[48px] rounded-[--radius-stm] border-2 font-bold uppercase tracking-wider text-sm transition-colors flex items-center justify-center gap-2"
+            :class="nextId
+              ? 'border-forest dark:border-emerald text-forest dark:text-emerald hover:bg-sage/20 dark:hover:bg-emerald/5'
+              : 'border-gray-200 dark:border-forest/10 text-gray-300 dark:text-white/20 cursor-not-allowed'"
+            :disabled="!nextId"
+            @click="nextId && navigateTo(`/puzzles/${nextId}`)"
+          >
+            Next
+            <UIcon name="i-lucide-arrow-right" class="size-4" />
+          </button>
+        </div>
       </div>
     </template>
   </div>
