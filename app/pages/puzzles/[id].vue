@@ -1,7 +1,6 @@
 <script setup lang="ts">
 const route = useRoute()
-const { allPuzzles, findById } = usePuzzles()
-const { markPuzzleSolved } = useAnalysis()
+const { allPuzzles, findById, markSolved } = usePuzzles()
 
 const puzzle = computed(() => findById(route.params.id as string))
 
@@ -13,7 +12,7 @@ async function onSolved() {
   if (!puzzle.value) return
   
   // Mark as solved
-  markPuzzleSolved(puzzle.value.id)
+  markSolved(puzzle.value.id)
   
   // Auto-navigate after delay
   if (nextId.value) {
