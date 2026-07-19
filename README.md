@@ -121,7 +121,7 @@ If you send a PR, please keep it small and focused, and feel free to mention if 
 
 ## License
 
-This project is licensed under the [MIT License](./LICENSE).
+This project is licensed under the [GPL-3.0 license](./LICENSE).
 
 ## Preview
 
