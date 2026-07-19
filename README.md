@@ -123,6 +123,4 @@ If you send a PR, please keep it small and focused, and feel free to mention if 
 
 This project is licensed under the [GPL-3.0 license](./LICENSE).
 
-## Preview
 
-<!-- TODO: Add screenshot or GIF of a puzzle being solved -->
